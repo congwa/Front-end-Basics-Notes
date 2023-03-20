@@ -1,0 +1,172 @@
+# vue3
+
+## vue3响应系统原理
+
+> vue3使用Proxy和reactive、effect、track、trigger、ref、toRefs、computed等方法重写了响应式系统。
+
+```javascript
+    const isObject = (val) => val !== null && typeof value === 'object'
+    const covert = target => (isObject(target)?  reactive(target) : target)
+    const hasOwn = (target,key) => Object.prototype.hasOwnProperty.call(target, key)
+
+    // 接收一个参数，判断参数是否是对象。 不是对象直接返回这个参数，不做响应式处理
+    function reactive(target) {
+        if(!isObject(target)) return target;
+
+        const handler  = {
+
+            get(target, key, receiver) {
+                // 收集依赖
+                track(target, key)
+                const result = Relect.get(target, key, receiver)
+                return covert(result)
+            },
+
+            // 设置的新值和旧值不相等时候，删除这个key并触发更新(trigger)
+            set(target, key , value, receiver) {
+                const oldValue = Reflect.get(target, key, receiver)
+                let result = true
+                if(oldValue !== value) {
+                    result = Reflect.set(target, key ,value ,receiver)
+
+                    // 触发更新
+                    trigger(target, key)
+                }
+                return result
+            },
+
+            deleteProperty(target, key) {
+                const hadKey = hasOwn(target, key)
+                const result = Relect.deleteProperty(target, key)
+                if(hadKey && result) {
+                    trigger(target, key)
+                }
+                return result
+            }
+        }
+        return new Proxy(target, handler)
+    }
+    // 当前活动的effect函数
+    let activeEffect = null;
+
+    // 模板类型
+    // const callback = () => (document.getElementById('#1').innerText = this.data.a) // 模板触发响应式
+
+    // 非模板类型的模拟副作用函数
+    const callback = function() {
+        function add() {
+            return this.data.a
+        }
+
+        const update = () =>  {
+            document.getElementById('#1').innerText = this.data.a
+        }
+        if(activeEffect) {
+            add()
+        } else {
+            update()
+        }
+    }.bind(vm)
+
+
+    const watchEffect = function (watchEffectCallBack) {
+        effect(watchEffectCallBack)
+    }
+
+    // vue的组件中
+    // watchEffect(function() {
+    //     this.data.a = ref.value.data.b + ref.value.data.c
+    // }) 
+
+    function effect(callback) {
+        activeEffect = callback
+        callback() //访问响应式对象属性，去收集依赖
+        activeEffect = null
+    }
+    let targetMap = new WeakMap();
+
+    // 触发更新
+    function trigger(target, key) {
+        const depsMap = targetMap.get(target)
+        if(!depsMap) return
+        const dep = depsMap.get(key)
+        if(dep) {
+            dep.forEach(effect => {
+                effect()
+            })
+        }
+    }
+
+    // 收集依赖，将activeEffect存入dep
+    function track(target,key) {
+        if(!activeEffect) return;
+        let depsMap = targetMap.get(target);
+        if(!depsMap) {
+            // 创建depsMap
+            targetMap.set(target, (depsMap = new Map()))
+        }
+        let depMap = depsMap.get(key)
+        if(!dep) {
+            // 创建dep
+            depsMap.set(key, (dep = new Set()))
+        }
+        dep.add(activeEffect)
+    }
+
+    const ref = function (raw) {
+        if(isObject(raw) && raw.__is_ref) {
+            return raw
+        }
+        // 如果是对象proxy 如果值 raw
+        value = covert(raw)
+        // 值proxy包起来
+        let v =  {
+            __is_ref: true,
+            get value () {
+                track(v, 'value')
+                return value
+            },
+            set value (newValue) {
+                raw = newValue
+                value = covert(raw)
+                trigger(v, 'value')
+            }
+        }
+        return v
+    }
+
+    /**
+     * 将reactive返回的每一个属性转换为类似ref返回的对象
+     */
+    const toRefs = function (proxy) {
+        const ret = proxy instanceof Array ? new Array(proxy.length): {}
+        for (const key in proxy) {
+            ret[key] = toProxyRef(proxy, key)
+        }
+    }
+
+    // 转换成类似Ref对象
+    const toProxyRef = function(proxy, key) {
+        const r = {
+            _v__ref: true,
+            get value() {
+                return proxy[key]
+            },
+            set value(newValue) {
+                proxy[key] = newValue
+            }
+        }
+        return r
+    }
+
+    // 通过effect监听getter内部的变化，
+    // getter中访问响应式数据属性的时候收集响应式依赖，
+    // 当数据发送变化时候重新执行effect函数，把getter的结果存到result中
+    const computed = function(getter) {
+        const result = ref()
+        effect(() => (result.value = getter()))
+        return result
+    }
+
+
+```
