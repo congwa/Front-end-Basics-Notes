@@ -4,10 +4,13 @@
 setTimeout(() => {
   console.log(1)
 }, 0)
+
+// promise1
 new Promise((resolve, reject) => {
   console.log(2)
   resolve('p1')
 
+  // promise2
   new Promise((resolve, reject) => {
     console.log(3)
     setTimeout(() => {
@@ -31,6 +34,6 @@ console.log(6)
 
 // 2 3 6 p2 p1  1 4 5
 
-// 分析: 后执行的微任务会插队到队列的最前面执行
+// 分析: promise2的then先入队,promise1执行完之后的then再入队，所以p2 优先 p1
 
 // promise 已经有了执行结果,则后面的resolve和reject都不再执行（状态凝结）
