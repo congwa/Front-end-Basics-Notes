@@ -13,6 +13,9 @@ setTimeout(function () {
   console.log('8 setTimeout')
 }, 0);
 async1();
+Promise.resolve().then(() => {
+  console.log('11111 Promise.resolve().then()')
+})
 new Promise(function (resolve) {
   console.log('4 promise1');
   resolve()
