@@ -2,21 +2,21 @@
 
 ## 工作原理
 
--   parseing(解析)
--   transfroming(转化)
--   生成(生成)
+- parseing(解析)
+- transfroming(转化)
+- 生成(生成)
 
 [参考图](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3721be091bd6413495b486e917b2e9bb~tplv-k3u1fbpfcp-zoom-in-crop-mark:4536:0:0:0.awebp)
 
 ## babel 转义分类
 
--   语法层： let、const、class、箭头函数等，这些需要在**构建**时候进行转译，语法层的转译,(class... 转成 var function...)
--   api 层: Promise、includes、map 等，这些是在全局或者 Object、Array 等原型上新增的方法、它们可以由响应 es5 的方式重新定义。
+- 语法层： let、const、class、箭头函数等，这些需要在**构建**时候进行转译，语法层的转译,(class... 转成 var function...)
+- api 层: Promise、includes、map 等，这些是在全局或者 Object、Array 等原型上新增的方法、它们可以由响应 es5 的方式重新定义。
 
 babel 对这两个分类的转译的做法不一样，需要单独给配置。
 
--   babel-core: babel 的核心,包含各个核心的 api,供 Babel 插件和打包使用
--   babel-cli: 命令行对 js 代码转换的工具
+- babel-core: babel 的核心,包含各个核心的 api,供 Babel 插件和打包使用
+- babel-cli: 命令行对 js 代码转换的工具
 
 ## 插件（用于处理**语法层**）
 
@@ -29,9 +29,19 @@ Babel 的代码转换是通过将插件（或预设）应用到您的配置文�
     "plugins": ["jsx", "flow"]
   }
 }
-// babel.config.json
+// babel.config.json  
 {
   "plugins": ["babel-plugin-myPlugin", "@babel/plugin-transform-runtime"]
+}
+```
+
+可选链
+
+```js
+// https://babeljs.io/docs/babel-plugin-proposal-optional-chaining 更多插件请查看
+
+{
+  "plugins": ["@babel/plugin-proposal-optional-chaining"]
 }
 
 ```
@@ -40,20 +50,19 @@ Babel 的代码转换是通过将插件（或预设）应用到您的配置文�
 
 Babel presets 可以充当可共享的 Babel 插件和/或配置集 options
 
--   @babel/preset-env ：用于编译 ES2015+ 语法,不包含 stage 阶段
--   @babel/preset-typescript： 用于 TypeScript
--   @babel/preset-react： [用于 React](https://babeljs.io/docs/babel-preset-react), 包含了转换 React JSX 语法的插件，并且还可配置一些插件，如@babel/plugin-transform-react-jsx-self 和@babel/plugin-transform-react-jsx-source 等。该预设还启用了@babel/plugin-transform-react-pure-annotations 插件，可以将顶级的 React 方法调用标记为纯函数，以进行 Tree Shaking 优化
--   @babel/preset-flow ：用于 Flow
+- @babel/preset-env ：用于编译 ES2015+ 语法,不包含 stage 阶段
+- @babel/preset-typescript： 用于 TypeScript
+- @babel/preset-react： [用于 React](https://babeljs.io/docs/babel-preset-react), 包含了转换 React JSX 语法的插件，并且还可配置一些插件，如@babel/plugin-transform-react-jsx-self 和@babel/plugin-transform-react-jsx-source 等。该预设还启用了@babel/plugin-transform-react-pure-annotations 插件，可以将顶级的 React 方法调用标记为纯函数，以进行 Tree Shaking 优化
+- @babel/preset-flow ：用于 Flow
 
 以上为官方预设足以可见 react 的在国外的地位
 
--   @vue/babel-preset-app： [@vue/babel-preset-app](https://www.npmjs.com/package/@vue/babel-preset-app)是一个 Babel 预设，用于在 Vue CLI 项目中使用。它的默认设置基于浏览器的目标，自动确定要应用的转换和 polyfills。需要注意的是，该预设仅适用于通过 Vue CLI 创建的项目，并不考虑外部使用情况
+- @vue/babel-preset-app： [@vue/babel-preset-app](https://www.npmjs.com/package/@vue/babel-preset-app)是一个 Babel 预设，用于在 Vue CLI 项目中使用。它的默认设置基于浏览器的目标，自动确定要应用的转换和 polyfills。需要注意的是，该预设仅适用于通过 Vue CLI 创建的项目，并不考虑外部使用情况
 
+### @babel/preset-env
 
-#### @babel/preset-env
-
--   @babel/preset-env： 包含的插件将支持所有最新的 JS 特性（ES2015,ES2016 等，不包含 stage 阶段 ）
--   配置
+- @babel/preset-env： 包含的插件将支持所有最新的 JS 特性（ES2015,ES2016 等，不包含 stage 阶段 ）
+- 配置
 
         ```js
         // .babelrc 或者 babelconfig.js
@@ -63,23 +72,28 @@ Babel presets 可以充当可共享的 Babel 插件和/或配置集 options
 
         ```
 
-    <details> 
+<details> 
         <summary>stage 阶段</summary>
         正在为您搜索：stage 阶段、babel
 
 在 Babel 中， stage 阶段指的是 ECMAScript 的提案阶段。TC39 是一个由 JavaScript 社区组成的技术委员会，负责 JavaScript 语言标准的发展。他们将不同阶段的 ECMAScript 提案分为以下四个 stage（阶段）：
 
--   Stage 0: “Strawman”（展示阶段）
--   Stage 1: “Proposal”（征求意见阶段）
--   Stage 2: “Draft”（草案阶段）
--   Stage 3: “Candidate”（候选人阶段）
--   Stage 4: “Finished”（正式发布阶段）
+- Stage 0: "Strawman"（展示阶段）
+- Stage 1: "Proposal"（征求意见阶段）
+- Stage 2: "Draft"（草案阶段）
+- Stage 3: "Candidate"（候选人阶段）
+- Stage 4: "Finished"（正式发布阶段）
 
 Babel 根据阶段的不同，对应地提供了一些插件（如@babel/plugin-proposal-class-properties、@babel/plugin-proposal-decorators），使得开发者可以使用实验性的 ECMAScript 特性，尽早体验和探索未来的语言特性。
 
 [资料来源][https://babeljs.io/docs/en/presets#what-are-babel-presets]
 
 </details>
+
+- 集成了开源项目[browserslist](https://github.com/browserslist/browserslist)、compat-table -> electron-to-chromium
+  - browserslist：配置用于前端构建工具的浏览器兼容性规则的项目 .browserslistrc 比 targets优先级要高
+  - compat-table：记录 ECMAScript 标准在不同浏览器中的支持情况的项目
+  - electron-to-chromium： 提供 Electron 版本和其使用的 Chromium 版本之间映射关系的项目
 
 #### @babel/preset-typescript
 
@@ -92,15 +106,17 @@ babel-plugin-transform-typescript 是 Babel 的一个插件，用于将 TypeScri
 
 1. 安装 `@babel/core`, `@babel/preset-env`, `@babel/cli` 和 `babel-plugin-transform-typescript`，可以通过运行以下命令进行安装：
 
-    ```
+    ```#!/bin/bash
 
+    
     npm install --save-dev @babel/core @babel/preset-env @babel/cli babel-plugin-transform-typescript
 
     ```
 
 2. 在项目的根目录下创建 `.babelrc` 文件，并添加以下内容：
 
-    ```
+    ```json
+
     {
       "presets": [
         "@babel/env"
@@ -115,8 +131,10 @@ babel-plugin-transform-typescript 是 Babel 的一个插件，用于将 TypeScri
 
 3. 在你的项目中使用 Babel 命令来转换 TypeScript 文件。例如，在命令行中执行以下命令：
 
-    ```
+    ```#!/bin/bash
+
     npx babel src --out-dir dist --extensions ".ts"
+
     ```
 
     这将会把 `src` 目录下的所有 TypeScript 文件转换成 JavaScript 文件，并存储在 `dist` 目录中。
@@ -125,9 +143,10 @@ babel-plugin-transform-typescript 是 Babel 的一个插件，用于将 TypeScri
 
 </details>
 
-####  @vue/babel-preset-app 
+#### @vue/babel-preset-app 
 
 使用
+
 ```js
 npm install --save-dev @vue/babel-preset-app
 
@@ -162,11 +181,12 @@ module.exports = {
 
 
 ```
+
 ### 插件和预设**执行顺序**
 
--   插件在预设之前运行。
--   插件顺序从前到后。
--   预设顺序相反（从最后到第一个）
+- 插件在预设之前运行。
+- 插件顺序从前到后。
+- 预设顺序相反（从最后到第一个）
 
 ```js
 // 插件
@@ -225,9 +245,9 @@ polyfill 的中文意思是垫片，顾名思义就是垫平不同浏览器或�
 
 #### useBuiltIns 属性 -- 主要为了解决不引入所有垫片，包不能太大的问题
 
--   false：不对 polyfills 做任何操作
--   entry：根据 target 中浏览器版本的支持，将 polyfills 拆分引入，仅引入有浏览器不支持的 polyfill
--   usage：检测代码中 ES6/7/8 等的使用情况，仅仅加载代码中用到的 polyfills
+- false：不对 polyfills 做任何操作
+- entry：根据 target 中浏览器版本的支持，将 polyfills 拆分引入，仅引入有浏览器不支持的 polyfill
+- usage：检测代码中 ES6/7/8 等的使用情况，仅仅加载代码中用到的 polyfills
 
 ```js
 //.babelrc
@@ -251,8 +271,8 @@ polyfill 的中文意思是垫片，顾名思义就是垫平不同浏览器或�
 
 #### @babel/plugin-transform-runtime - 解决代码冗余 @babel/runtime（运行时依赖）- 包含辅助函数
 
--   解决代码冗余
--   解决全局污染
+- 解决代码冗余
+- 解决全局污染
 
 <details>
     <summary>代码冗余</summary>
@@ -334,6 +354,7 @@ new Promise(function (resolve, reject) {
   resolve(100);
 });
 ```
+
 preset-env在处理例如Promise这种的api时，只是引入了core-js中的相关的js库，这些库重新定义了Promise，然后将其挂载到了全局。
 然会造成全局变量污染，同理其他的例如Array.from等会修改这些全局对象的原型prototype，这也会造成全局对象的污染。
 
@@ -353,7 +374,9 @@ preset-env在处理例如Promise这种的api时，只是引入了core-js中的�
 }
 
 ```
+
 注意：
+
 1. corejs: 2仅支持全局变量（例如Promise）和静态属性（例如Array.from），corejs: 3还支持实例属性（例如[].includes）
 2. useBuiltIns， babel7中已经将其设置为默认值（Babel 7 中的 useBuiltIns 选项的默认值为 false）
     - 在 Babel 6 中，默认情况下需要手动安装和引入 polyfills，以便支持 ES6+ 的 API 和特性
@@ -378,11 +401,8 @@ new _promise["default"](function (resolve, reject) {
 
 </details>
 
-
 ## TODO
 
-- TODO: target
-- TODO: browserList配置
 - TODO: esbuild
 - TODO: SWC
 - TODO: 压缩 css js常用配置
