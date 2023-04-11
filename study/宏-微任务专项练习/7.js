@@ -1,3 +1,5 @@
+//  第七天
+
 var promise = new Promise(resolve=>{
 	console.log(1)
 	resolve()
@@ -15,3 +17,5 @@ async function getPromise(){
 	console.log(6)
 } 
 console.log(8)
+
+// 1 5 8 3 6 2
