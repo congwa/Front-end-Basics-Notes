@@ -35,3 +35,12 @@ new Promise(function (resolve) {
 });
 
 console.log('script end');
+
+//script start
+//async1 start
+//promise1
+//script end
+//promise2
+//setTimeout3
+//setTimeout2
+//setTimeout1
