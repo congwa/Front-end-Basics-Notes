@@ -1,36 +1,22 @@
-async function async1() {
-  console.log('async1 start');
-  await async2();
-  /*
-		async2().then(res=>{
-			console.log('a1 end');
-		})
-	*/
-  console.log('async1 end');
-}
+console.log("start");
 
-async function async2() {
-  new Promise(function (resolve) {
-    console.log('promise1');
-    resolve();
-  }).then(function () {
-    console.log('promise2');
-  });
-}
-
-console.log('script start');
-
-setTimeout(function () {
-  console.log('setTimeout');
+setTimeout(() => {
+  console.log("setTimeout");
 }, 0);
 
-async1();
+new Promise((resolve, reject) => {
+  for (var i = 0; i < 5; i++) {
+    console.log(i);
+  }
+  resolve() //修改promise状态为成功
+}).then(() => {
+  console.log("promise回调函数");
+})
 
-new Promise(function (resolve) {
-  console.log('promise3');
-  resolve();
-}).then(function () {
-  console.log('promise4');
-});
+console.log("end");
 
-console.log('script end');
+// start
+// 01234
+// end
+// promise回调函数
+// setTimeout

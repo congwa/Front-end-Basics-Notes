@@ -170,3 +170,25 @@
 
 
 ```
+
+## provide inject
+
+建议尽可能将任何对响应式状态的变更都保持在供给方组件中
+
+### provide
+
+vue3**组合式api**
+
+1. provide传递**值类型**
+2. provide传递**对象类型**
+3. provide传递**响应式类型**
+    - 子组件为响应式
+4. provide传递**computed**
+   - 子组件为响应式
+5. provide传递**响应式类型和函数**
+   - 子组件为响应式
+6. provide传递**readonly和函数** 
+   - 子组件为响应式
+   > 官方推荐这样
+
+### inject
