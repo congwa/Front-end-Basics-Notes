@@ -34,6 +34,13 @@
 
 4. 最后渲染层将 data 渲染为可视化的 UI。
 
+
+## 当前在一个app中快速有小程序能力的方案
+
+- uni-sdk 
+- FinClip
+- mPaaS
+
 ## 产生独立思考
 
 1. webview
