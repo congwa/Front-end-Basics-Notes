@@ -1,5 +1,7 @@
 # next13
 
+[next13路线图](https://beta.nextjs.org/docs/app-directory-roadmap)
+
 ## react13官方使用建议(为什么这么建议，接着往下看)
 
 - 使用服务器组件在服务器上获取数据。
@@ -435,3 +437,107 @@ export default function Todo(todo: Todo) {
   );
 }
 ```
+
+
+## 并行路由
+
+并行路由是使用命名槽创建的。槽是按照@folder惯例定义的。 -- @开头
+
+```js
+dashboard
+├── @audience
+│   ├── demographics
+│   │   └── page.js
+│   ├── subscribers
+│   │   └── page.js
+│   └── page.js
+├── @views
+│   ├── impressions
+│   │   └── page.js
+│   ├── view-duration
+│   │   └── page.js
+│   └── page.js
+├── layout.js
+└── page.js
+
+```
+
+```tsx
+function AudienceNav() {
+  return <nav>...</nav>;
+}
+
+function ViewsNav() {
+  return <nav>...</nav>;
+}
+
+export default function Layout({ children, audience, views }) {
+  return (
+    <>
+      <h1>Tab Bar Layout</h1>
+      {children}
+
+      <h2>Audience</h2>
+      <AudienceNav />
+      {/* 并行路由的插槽 */}
+      {audience}   
+
+      <h2>Views</h2>
+      <ViewsNav />
+      {/* 并行路由的插槽 */}
+      {views}
+    </>
+  );
+}
+```
+
+### 并行路由的行为
+
+#### 网址
+
+插槽不影响 URL 结构。文件路径/dashboard/@views/subscribers可在/dashboard/subscribers.
+
+#### 导航  -- 软导航
+
+当向后和向前导航时（使用软导航），URL 将更新并且浏览器将恢复以前活动的插槽。
+
+例如，如果用户导航到/dashboard/subscribers，然后导航到，则在返回时/dashboard/impressionsURL 将更新为。dashboard/subscribers
+
+#### default.js
+
+在刷新（或硬导航）时，浏览器将呈现与当前 URL 匹配的插槽，但不知道哪个其他并行插槽处于活动状态。
+
+当浏览器无法恢复以前的状态时，您可以定义一个default.js文件作为**后备呈现**。
+
+
+```js
+
+dashboard
+├── @team
+│   └── ...
+├── @user
+│   └── ...
+├── default.js
+├── layout.js
+└── page.js
+
+```
+
+##### 条件路由
+
+Parallel Routes 可用于实现条件路由。例如，您可以根据当前用户类型呈现@user和路由：@team
+
+```tsx
+export default async function Layout({ children, user, team }) {
+  const userType: 'user' | 'team' = getCurrentUserType();
+
+  return (
+    <>
+      {userType === 'user' ? user : team}
+      {children}
+    </>
+  );
+}
+
+```
+
