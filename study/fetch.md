@@ -31,9 +31,9 @@ Promise<Response> fetch(input[, init]);
 
 1. 在 HTTP 响应头中通过 Cache-Control 来控制缓存，使用 no-cache 和 max-age=0 两个指令来防止浏览器缓存数据。例如：
 
-```js
-Cache-Control: no-cache, max-age=0
-```
+  ```js
+    Cache-Control: no-cache, max-age=0
+  ```
 
 2. 在 HTTP 响应头中设置 ETag 或 Last-Modified，用于标记数据是否更新。例如：
 

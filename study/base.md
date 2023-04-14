@@ -40,6 +40,7 @@
 - 定时触发器线程
 - 事件触发线程  
 - 异步 http 请求线程
+- [资料](https://juejin.cn/post/6844904165462769678#heading-12)
 
 主线程，包括GUI+JS。所有的 JS 执行，HTML 解析和 DOM 构造，CSS 解析和计算得到 computed style，Layout，Paint（主要是决定 paint order，最终layer tree 和 paint order信息提交到 compositor 线程完成最终绘制） 等等。
 其它线程，包括 worker 的，Blink 和 V8 创建的内部使用的线程（比如处理 webaudio、database）等等。
