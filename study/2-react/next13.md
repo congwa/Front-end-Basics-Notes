@@ -351,7 +351,7 @@ fetch('https://...', { cache: 'no-store' });
   
 ## 服务端组件和客户端组件区分
 
-在 Next13 中 ， 在 app 目录下，如要使用 useState 等状态管理的 hook，那么该组件只在客户端执行，需要在首行加入 'use client' 指令
+在 Next13 中 ， 在 app 目录下，如要使用 useState 等状态管理的 hook，那么该组件只在客户端执行，需要在首行加入 'use client' 指令。-- 在这里我们知道，服务端组件一定是无状态的，只是渲染html
 
 ```js
 'use client';
@@ -541,3 +541,9 @@ export default async function Layout({ children, user, team }) {
 
 ```
 
+## 思考一些不解的问题
+
+1. 客户端组件里面的服务端组件会怎么渲染？ 初始的渲染流程怎么去处理客户端渲染的组件。
+    - 这里很疑惑的点是，客户端组件即便有usestate就必须标明使用use client; 客户端组件的渲染是否会阻塞服务端渲染。
+    - 猜测： 客户端组件的标明是标明这个组件是有副作用的，不能够使用异步服务端组件，其实在服务端渲染流程中也是直接渲染出不包含副作用模板的。 这样是可以实现的。感觉就是相当于无suspense 包裹的组件，直接作为模板html进行渲染。
+2. 第二个猜测，next13把所有组件chunk化，async server component只是lazy Suspense的简化。 我们知道遇到Suspense就会出现占位符。 再仔细一想，所有的组件chunk化，或者所有组件延迟化，应该是不对的，这样的话，无法保证顺序，选择性注水也变得没有意义。
