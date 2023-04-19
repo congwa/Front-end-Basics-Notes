@@ -192,3 +192,25 @@ vue3**组合式api**
    > 官方推荐这样
 
 ### inject
+
+
+## toRefs逆向
+
+```ts
+import { reactive, isRef, ref } from 'vue'
+
+type ValueType = null | undefined | string | number | boolean
+
+function fromRefs<T extends object>(obj: { [K in keyof T]: ValueType | Ref<ValueType> }): T {
+  const result: { [K in keyof T]: ValueType } = {} as any
+  for (const key in obj) {
+    if (isRef(obj[key])) {
+      result[key] = (obj[key] as Ref<ValueType>).value
+    } else {
+      result[key] = obj[key] as ValueType
+    }
+  }
+  return reactive(result) as T
+}
+
+```
