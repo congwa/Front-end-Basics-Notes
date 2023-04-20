@@ -1,5 +1,39 @@
 # vue3
 
+
+## suspense 配合 异步setup进行延迟渲染组件
+
+```js
+// 子组件
+async setup() {
+    const peoples = ref(null);
+    const headers = { "Content-Type": "application/json" };
+    const fetchPeoples = await fetch("https://swapi.dev/api/people", {
+        headers,
+    });
+    peoples.value = await fetchPeoples.json();
+    return { peoples };
+}
+
+
+```
+
+```html
+<!-- 父组件 -->
+ <suspense>
+    <template #default>
+        <CyPeoples />
+    </template>
+    <template #fallback>
+        <div>
+            <h3>数据加载中……</h3>
+        </div>
+    </template>
+    </suspense>
+
+
+```
+
 ## vue3响应系统原理
 
 > vue3使用Proxy和reactive、effect、track、trigger、ref、toRefs、computed等方法重写了响应式系统。
