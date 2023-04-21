@@ -189,6 +189,21 @@ window.webContents.on('did-create-window', (childWindow) => {
 
 总结：视图页面生成的dom结构中，document.body已无pageframe.html模板中对应body中的script内容，这是因为视图层的WAWebview.js在通过virtual dom生成真实dom过程中，它会挂载到页面的document.body上，覆盖掉pageframe.html模板中对应document.body的内容。
 
+官网有个[事件交互图](https://developers.weixin.qq.com/miniprogram/dev/framework/app-service/page-life-cycle.html)
+
+[页面切换优化](https://developers.weixin.qq.com/miniprogram/dev/framework/performance/tips/runtime_nav.html)
+
+## 回答问题
+
+- 是否会无限的创建新的webview?
+  不会，最多10个
+- 如何销毁？创建的丝滑动画怎么产生？
+  通过pageframe进行丝滑动画，就是webview之间的动画
+  销毁： wx.navigateBack则为销毁webview。
+- 小程序如何快速打开一个页面渲染的？
+  通过pageframe webview进行内容替换，
+- 是否一个逻辑层对应一个ui层webview吗？
+  是的 
 
 
 
