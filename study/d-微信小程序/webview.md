@@ -45,7 +45,7 @@ document.getElementsByTagName('webview')[0].showDevTools(true, null)
 
 
 script里面有个webviewId,从这个id又可以再次印证webview层不止一个
-- [webview-ID](./../imgs/%E5%B0%8F%E7%A8%8B%E5%BA%8Fwebview-id.png)
+- ![webview-ID](./../imgs/%E5%B0%8F%E7%A8%8B%E5%BA%8Fwebview-id.png)
 - wxAppCode 整个页面的json wxss wxml编译之后都存储在这里，下面有个script标签就是它，下面会讲到。
 - Vd_version_info 版本信息
 - ./dev/wxconfig.js是小程序默认总配置项，包括用户自定义与系统默认的整合结果。在控制台输入__wxConfig可以看出打印结果
