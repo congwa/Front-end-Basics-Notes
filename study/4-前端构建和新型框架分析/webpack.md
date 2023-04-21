@@ -1,5 +1,7 @@
 # webpack
 
+[范文杰webpack系列文章](https://zhuanlan.zhihu.com/p/425076452)
+
 ## 流程
 
 > compile、make、build、seal、emit
@@ -37,8 +39,6 @@
   >
   >  1. 使用webpack打包vite项目。
   >  2. 使用插件，浏览器请求完这个chunk后，通过插件去解析。
-
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 
 - 在使用 Module Federation 时，Host、Remote 必须同时配置 shared，且一致
 - module federation 是否可以做到与技术栈无关
