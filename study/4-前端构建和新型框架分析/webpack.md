@@ -324,6 +324,38 @@ webpack的loader默认在单线程执行,现代电脑一般都有多核cpu,可�
 #### 处理图片文件 - webpack4
 
 webpack4使用file-loader和url-loader来处理
+##### url-loader 
+url-loader 是一个基于 file-loader 的 webpack 加载器，可以将文件转换成 Data URL，然后将其嵌入到打包后的 JavaScript 代码中。
+
+具体来说，url-loader 在加载指定的资源时，会根据指定的大小阈值和 MIME 类型，将小于阈值的文件转换为 Data URL 格式，大于阈值的文件则使用 file-loader 将其复制到输出目录，并返回其位置的 URL。这样做的好处是，将小文件转换为 Data URL 可以避免额外的请求，提高页面的加载速度；而对于大文件，则使用常规的 URL 引用方式。
+
+在 URL 转换过程中，url-loader 还可以配置一些参数，比如：
+
+- limit：指定文件大小阈值，小于该阈值的文件将被转换为 Data URL，默认为 2048 字节。
+- mimetype：指定 MIME 类型，用于设置 Data URL 中的 Content-Type 头信息。
+- fallback：指定当文件超出大小阈值时要使用的 loader，比如 file-loader。
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192, // 文件大小阈值为 8 KB
+              mimetype: 'image/png' // 设置 MIME 类型
+            }
+          }
+        ]
+      }
+    ]
+  }
+};
+// 使用 url-loader 加载了所有后缀为 .png、.jpg 或 .gif 的图片文件。其中，指定了大小阈值为 8 KB，超过该阈值的文件将会被转换成 URL 引用的方式。同时，为了更好地利用浏览器缓存，可以指定不同的 MIME 类型来区分不同的图片类型。
+```
 
 #### 处理图片文件 - webpack5
 
