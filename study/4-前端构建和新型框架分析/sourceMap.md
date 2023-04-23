@@ -95,7 +95,7 @@ sourcemap生效依赖浏览器、sentry或者手动映射
 ### 浏览器
 
 浏览器中基本上会默认启用 sourcemap 映射功能，即只要对应的 bundle 文件中有 sourceMappingURL 或 sourceURL 等指向的注释内容即可
-[chrome](./../imgs/%E5%BC%80%E5%90%AFsourcemap.png)
+[chrome](/study/imgs/%E5%BC%80%E5%90%AFsourcemap.png)
 
 ### sentry中开启sourcemap，有接入 sourcemap 的错误信息在 sentry 中也无法进行快速定位
 
