@@ -19,3 +19,11 @@ Skyline 创建了一条渲染线程来负责 Layout, Composite 和 Paint 等渲�
 - 框架的代码之间无需再通过 JSBridge 进行数据交换，减少了大量通信时间开销
 
 ![skyline](/study/imgs/%E5%B0%8F%E7%A8%8B%E5%BA%8F-skyline.png)
+
+
+## 特性
+
+TODO: skyline特性
+## Worklet机制
+
+TODO: Worklet机制
