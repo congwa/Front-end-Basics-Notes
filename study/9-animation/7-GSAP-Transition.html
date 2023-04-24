@@ -1,0 +1,99 @@
+<!-- 张鑫旭转场动画 https://www.zhangxinxu.com/wordpress/2019/05/css-transfer-animation/ -->
+<!-- iCss 奇妙的 CSS MASK 章节 https://github.com/chokcoco/iCSS/issues/80 -->
+<!-- CSS-Inspiration bg-mask-transition 章节-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>遮罩转场动画</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+  </head>
+  <style>
+    .container {
+      top: 50px;
+      position: fixed;
+      width: 100vw;
+      height: 500px;
+      overflow: hidden;
+    }
+    .zoom {
+      width: 100vw;
+      height: 500px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      position: absolute;
+      top: 0;
+    }
+    #zoom1 {
+      background-color: red;
+    }
+    #zoom2 {
+      background-color: yellow;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <div id="zoom1" class="zoom">zoom1</div>
+      <div id="zoom2" class="zoom">zoom2</div>
+    </div>
+  </body>
+  <script>
+    function Enter(id) {
+      const tl = gsap.timeline()
+      tl.set(id, {
+        autoAlpha: 0,
+        scale: 2,
+        transformOrigin: "50% 50%",
+        zIndex: 1
+      });
+
+      tl.to(id, 1, {
+        autoAlpha: 1,
+        scale: 1,
+        opacity:1,
+        ease: "power4.easeOut",
+      });
+  
+      return tl
+    }
+
+    function Leave(id) {
+      const tl = gsap.timeline()
+      tl.set(id, {
+        zIndex: 3,
+        WebkitMask: "linear-gradient(45deg, #000 100%, transparent 100%, transparent 100%)",
+      })
+      tl.to(id, 1, {
+        zIndex: 2,
+        ease: "power4.easeOut",
+        WebkitMask: "linear-gradient(45deg, #000 0%, transparent 0%, transparent 100%)",
+      });
+      tl.set(id,{
+        zIndex: 0,
+        WebkitMask: ''
+      }, ">")
+      return tl
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelector("#zoom1").addEventListener("click", function (e) {
+        console.log('leave zoom1')
+        e.stopPropagation();
+        const timeline = gsap.timeline()
+        timeline.add(Leave('#zoom1'))
+        timeline.add(Enter('#zoom2'), "<-=0.2")
+      });
+      document.querySelector("#zoom2").addEventListener("click", function (e) {
+        console.log('leave zoom2')
+        e.stopPropagation();
+        const timeline = gsap.timeline()
+        timeline.add(Leave('#zoom2'))
+        timeline.add(Enter('#zoom1'), "<-=0.2")
+      });
+    });
+  </script>
+</html>

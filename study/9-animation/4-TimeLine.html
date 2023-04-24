@@ -1,0 +1,91 @@
+<!-- TimeLine时间轴 -- 总体的协调各个时间线上的事务 -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TimeLine时间轴</title>
+  </head>
+  <body>
+    <div id="box" style="width: 300px; height: 300px; background-color: red; position: absolute;"></div>
+  </body>
+  <script>
+    function linear(t, b, _c, d) {
+      var c = _c - b;
+      return (c * t) / d + b;
+    }
+
+    let perTime = 1000 / 60; // 1000 毫秒内渲染 60帧，那么每间隔 16.6毫秒渲染一帧
+    let animationData = [
+      {
+        key: "left",
+        defaultValue: 0,
+        currentValue: 0,
+        target: 500,
+        duration: 5000,
+        startTime: 1000,
+      },
+      {
+        key: "opacity",
+        defaultValue: 1,
+        currentValue: 1,
+        target: 0.5,
+        duration: 8000,
+        startTime: 3000,
+      },
+    ];
+
+    // startTime 开始的时刻，从第x秒开始，单位是毫秒
+    let currentTime = 0; // 当前时刻
+    let endTime = 0;
+
+    animationData.forEach((item) => {
+      const { duration, startTime } = item;
+      endTime = Math.max(duration + startTime, endTime); // 计算出在什么时刻需要结束
+    });
+
+    let box = document.getElementById('box');
+
+    
+    function _render() {
+      currentTime += perTime;
+      // 每渲染一次，进度条加一点，
+      // 如果是时间轴倒放那么 currentTime = Math.min(currentTime - perTime, 0) 就行
+
+      animationData.forEach((item) => {
+        const { startTime, duration, defaultValue, target, currentValue } =
+          item;
+
+        // 当时间线到达开始时间后，执行该时间线动画
+        // 当到达时间结束的时候，停止动画
+        if (currentTime >= startTime && currentTime <= startTime + duration) {
+          let calcValue = linear(
+            currentTime - startTime,
+            defaultValue,
+            target,
+            duration
+          );
+          item.currentValue = calcValue;
+        }
+      });
+      console.log("div 位移：", animationData[0].currentValue);
+      console.log("div 透明度变化：", animationData[1].currentValue);
+      console.log("当前时刻为：", currentTime);
+      console.log("\n");
+
+      // 这里把计算的结果赋值给 div
+      box.style.left = animationData[0].currentValue + 'px'
+      box.style.opacity = animationData[1].currentValue
+
+      box.innerText = `left: ${animationData[0].currentValue},opacity: ${animationData[1].currentValue} `
+
+      // 只要时间没有结束，就继续执行, 如果是倒放，就让currentTime > 0 即可
+      if (currentTime <= endTime) {
+        window.requestAnimationFrame(_render)
+      }
+    }
+    window.requestAnimationFrame(_render)
+  </script>
+</html>

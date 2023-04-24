@@ -1,0 +1,153 @@
+<!-- svg动画 -- 变形动画 -->
+<!-- 
+  ### 原理
+  平滑的变形动画真的算是 SVG 中的“独门武器”了。
+  其原理很容易想到。就是不同形状之间能平滑转换，SVG 中的形状其实也是有不同坐标之间的线段绘制而成的。
+  那么在转换形状的时候，只是在移动线段的坐标。从而达到了形状改变的效果，加之平滑的动画展现。达到想要的效果。
+-->
+<!-- 
+### 边数相等
+需要注意的是，如果我们在做形状转换的时候，转换前形状的 控制点 和转换后的 控制点 数不同，这时动画转换会显得差强人意。
+因为 SVG 形状变形的时候要么增加控制点，要么减少了控制点。而控制点的增删就不能平滑的转换了。
+ -->
+
+<!-- 
+  ### path绘制
+  SVG 图形中完全是用 path 绘制的话，GreenSock 支持 path → path 转换的控制点数不同也可以完成平滑动画效果
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>播放svg动画-- 变形动画</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="./MorphSVGPlugin.min.js"></script>
+  </head>
+  <style>
+    body {
+      background-color: black;
+    }
+    .bloc {
+      margin-left: 100px;
+    }
+    #stars {
+      visibility: hidden;
+    }
+  </style>
+  <body>
+    <div class="bloc bloc-head">
+      <svg width="300" height="300" viewBox="0 0 600 600">
+        <!-- star path -->
+        <path
+          d="M185,1.12977573 L128.163889,116.292316 L1.07448057,134.759488 L93.0372403,224.401023 L71.3277776,350.976903 L185,291.215879 L298.672222,350.976903 L276.96276,224.401023 L368.925519,134.759488 L241.836111,116.292316 L185,1.12977573 Z"
+          id="star"
+          fill="#4af"
+        ></path>
+        <!-- decagon path set fill transparent, you don't see the sharp -->
+        <path
+          d="M160,0 L258.885438,32 L320,110.557281 L320,210.424346 L258.885438,289.442719 C217.122754,309.81424 184.160941,320 160,320 C135.839059,320 102.877246,309.81424 61.1145618,289.442719 L0,210.424346 L0,110.557281 L61.1145618,32 L160,0 Z"
+          id="decagon"
+          fill="transparent"
+        ></path>
+      </svg>
+
+      <svg width="300" height="300" viewBox="0 0 600 600">
+        <!-- star path -->
+        <path
+          d="M185,1.12977573 L128.163889,116.292316 L1.07448057,134.759488 L93.0372403,224.401023 L71.3277776,350.976903 L185,291.215879 L298.672222,350.976903 L276.96276,224.401023 L368.925519,134.759488 L241.836111,116.292316 L185,1.12977573 Z"
+          id="star1"
+          fill="#4af"
+        ></path>
+        <!-- decagon path set fill transparent, you don't see the sharp -->
+        <path
+          d="M160,0 L258.885438,32 L320,110.557281 L320,210.424346 L258.885438,289.442719 C217.122754,309.81424 184.160941,320 160,320 C135.839059,320 102.877246,309.81424 61.1145618,289.442719 L0,210.424346 L0,110.557281 L61.1145618,32 L160,0 Z"
+          id="decagon1"
+          fill="none"
+        ></path>
+        <!-- rectangle sharp -->
+        <rect
+          id="rect"
+          x="0.5"
+          y="0.5"
+          width="319"
+          height="319"
+          id="rect"
+          fill="none"
+        ></rect>
+      </svg>
+
+      <svg width="480" height="480" viewBox="0 0 600 600">
+        <!-- decagon path set fill transparent, you don't see the sharp -->
+        <path
+          d="M160,0 L258.885438,32 L320,110.557281 L320,210.424346 L258.885438,289.442719 C217.122754,309.81424 184.160941,320 160,320 C135.839059,320 102.877246,309.81424 61.1145618,289.442719 L0,210.424346 L0,110.557281 L61.1145618,32 L160,0 Z"
+          id="decagon2"
+          fill="none"
+        ></path>
+        <defs>
+          <clipPath id="Mask">
+            <!-- star path -->
+            <path
+              d="M185,1.12977573 L128.163889,116.292316 L1.07448057,134.759488 L93.0372403,224.401023 L71.3277776,350.976903 L185,291.215879 L298.672222,350.976903 L276.96276,224.401023 L368.925519,134.759488 L241.836111,116.292316 L185,1.12977573 Z"
+              id="star2"
+              fill="none"
+            ></path>
+          </clipPath>
+        </defs>
+        <image
+          width="500px"
+          height="500px"
+          xlink:href="https://picsum.photos/500"
+          clip-path="url(#Mask)"
+        />
+      </svg>
+    </div>
+  </body>
+  <script>
+    let tl = gsap.timeline({
+      repeat: -1,
+      yoyo: true,
+      repeatDelay: 0.3,
+      defaults: {
+        duration: 3,
+      },
+    });
+
+    tl.to("#star", { morphSVG: "#decagon" }).timeScale(3);
+  </script>
+  <script>
+    // 将 rect 图形转换为 path
+    MorphSVGPlugin.convertToPath("rect");
+
+    let tl1 = gsap.timeline({
+      repeat: -1,
+      yoyo: true,
+      repeatDelay: 0.3,
+      defaults: {
+        duration: 3,
+      },
+    });
+
+    tl1
+      .to("#star1", { morphSVG: "#decagon1" }, "+=1")
+      .to("#star1", { morphSVG: "#rect" }, "+=1")
+      .timeScale(3);
+  </script>
+
+  <script>
+    MorphSVGPlugin.convertToPath("circle");
+
+    let tl2 = gsap.timeline({
+      repeat: -1,
+      yoyo: true,
+      repeatDelay: 0.3,
+      defaults: {
+        duration: 3,
+      },
+    });
+
+    tl2.to("#star2", { morphSVG: "#decagon2" }).timeScale(3);
+  </script>
+</html>
