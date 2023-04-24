@@ -194,7 +194,11 @@ window.webContents.on('did-create-window', (childWindow) => {
 
 官网有个[事件交互图](https://developers.weixin.qq.com/miniprogram/dev/framework/app-service/page-life-cycle.html)
 
+[小程序启动流程图](https://developers.weixin.qq.com/miniprogram/dev/framework/performance/tips/start_process.html)
+
 [页面切换优化](https://developers.weixin.qq.com/miniprogram/dev/framework/performance/tips/runtime_nav.html)
+
+[小程序运行环境-nw.js](https://developers.weixin.qq.com/miniprogram/dev/framework/runtime/env.html)
 
 ## 回答问题
 
@@ -228,8 +232,14 @@ window.webContents.on('did-create-window', (childWindow) => {
 
 为什么这么说，从以下来分析
 
-1. 在微信上打开一个小程序，那么加载本小程序展示首页的最小js代码，交由逻辑层(app service层)进行js代码执行，最后计算出最小html
-2. 计算出首屏最小html后，交给pageFrame(渲染层)选去进行渲染，在上面进行逻辑层解析执行js计算最小html的时间，pageFrame是在等待的，这时候可以在pageFrame上放一个加载进度，但是这个加载进度完全可以在webview的载体原生层面上去放。(这忽略了创建webview所需要的时间)
+传统的ssr项目上面
+1. service层进行js代码分析，计算出最小的html进行下发
+  
+在小程序中，逻辑层、渲染层同时进行初始化，
+1. 逻辑层执行用户编写的js代码进行计算出初始化data数据，等待渲染层初始化完成，进行告知逻辑层
+2. 渲染层进行使用pageFrame，在pageFrame进行reload流程，替换pushState，收到由native下发的代码包，进行html注入，js注入，style注入，执行js代码，进行适配工作完成后，通知逻辑层下发data数据，之后收到data数据进行页面渲染。
+
+综上所诉，pageFrame是在等待的渲染一个页面应该等待的时间还是那些，增加了逻辑层渲染层的通讯时间，减少了同步执行代码计算data的时间，但是data一般都是静态数据，不需要计算，这么做更多的是为了线程安全吧，这时候可以在pageFrame上放一个加载进度，但是这个加载进度完全可以在webview的载体原生层面上去放。(这忽略了创建webview所需要的时间)
 
   那我们回答一下结论，小程序是否解决了白屏的问题？
 
@@ -248,7 +258,9 @@ window.webContents.on('did-create-window', (childWindow) => {
 
 如果在纯浏览器(webview环境下)，浏览器渲染进程的主线程非常忙(这里引用卡颂老师的原话)，JS 逻辑、DOM 树创建、CSS 解析、样式计算、Layout、Paint (Composite) 都发生在同一线程，执行过多的 JS 逻辑可能阻塞渲染，导致界面卡顿。
 
-如果把js逻辑放到一个新的线程，那么小程序的渲染线程就不会进行阻塞了。
+1. 如果把js逻辑放到一个新的线程，那么小程序的渲染线程就不会进行阻塞了。
+2. js在逻辑层，只能执行固定的那些代码，逻辑层也没有操控dom的权利，所以代码是安全可控的。
+
 
 当然，这样的设计也提高了复杂性，也迎来了新的挑战，如果有兴趣了解更多，请期待接下来的文章，和问题解答。
 
