@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env PORT=8000 ts-node-dev --respawn ./index.ts",
+    "start": "cross-env ts-node-dev --respawn ./index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^18.16.0",
     "cross-env": "^7.0.3",
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
