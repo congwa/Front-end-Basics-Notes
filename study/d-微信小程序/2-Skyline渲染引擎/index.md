@@ -21,6 +21,8 @@ Skyline 创建了一条渲染线程来负责 Layout, Composite 和 Paint 等渲�
 ![skyline](/study/imgs/%E5%B0%8F%E7%A8%8B%E5%BA%8F-skyline.png)
 
 
+从介绍来看，和flutter的方案非常类似
+
 ## 特性
 
 TODO: skyline特性
