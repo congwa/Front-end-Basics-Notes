@@ -12,4 +12,5 @@ http/1.1相比http/1.0增加一个持久连接的概念 请求Connection: keep-a
 
 
 
-TODO: 
+
+![http1.1](/study/imgs/http1.1.webp)

@@ -121,6 +121,3 @@
 
 1. cookie设置same-site:strict
 
-### vw布局
-
-### 缩放
