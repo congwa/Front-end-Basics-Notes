@@ -4,3 +4,18 @@
 ## meet_pipe
 
 ![meet_pipe](/study/imgs/meet_pipe.png)
+
+## input_output
+
+![input_output](/study/imgs/input_output.png)
+
+
+## read_it
+
+![read_it](/study/imgs/read_it.png)
+
+
+## write_to_me
+
+![write_to_me](/study//imgs/write_to_me.png)
+

@@ -35,6 +35,7 @@ stream-adventure verify 01.js
 
 流存在于许多 Node.js 模块中，例如 http.request() 、 zlib.createGzip() 、 fs.createReadStream() 、 process.stdout ...所有这些返回流。
 
+---
 ### pipe 方法
 
 pipe 方法允许您将可读流的输出连接为可写流的输入
@@ -50,5 +51,131 @@ readable.pipe(duplex).pipe(writable)
 
 ```
 
+---
+## 可读流
 
+要实现一个 Readable 流，你需要构造一个对象，或者继承自 stream.Readable 类，并在其中实现一个 _read() 方法。
+
+
+```js
+const { Readable } = require('stream')
+
+const myStream = new Readable({})
+myStream._read = () => {}
+
+```
+
+或者
+
+```js
+const { Readable } = require('stream')
+
+class MyStream extends Readable {
+  _read() {}
+}
+```
+
+注意：此 _read 方法不得由应用程序代码直接调用。它只能由内部 Readable 类方法调用
+
+### 可读流的两种模式
+
+Readable 流以两种模式之一运行：流动和暂停
+
+1. 在流动模式下，数据会自动从底层系统读取并尽快提供
+2. 在暂停模式下，必须显式调用 read() 方法才能从流中读取数据块
+
+所有可读流都以暂停模式开始，但可以切换到流动模式，也可以切换回暂停模式。
+
+### 使用可读流
+
+1. readable.pipe(writable) ，将 Writable 流附加到可读对象，使其自动切换到流动模式并将其所有数据推送到附加的 Writable
+2. readable.on('readable', ...) ，此处流 ( readable ) 处于暂停模式，必须使用 read(size) 方法开始使用数据。
+3. readable.on('data', ...) ，添加 data 事件处理程序将流切换到流动模式。我们可以分别使用 pause() 和 resume() 方法暂停和恢复流。当需要对流的数据执行一些耗时的操作（例如写入数据库）时，这很有用
+
+### 向流中添加数据
+
+可以使用 push() 方法将内容添加到可读内部 Buffer 中。
+
+### docs
+
+- stream.Readable: https://nodejs.org/api/stream.html#stream_class_stream_readable
+- readable._read(): https://nodejs.org/api/stream.html#stream_readable_read_size_1
+- 流阅读模式： https://nodejs.org/api/stream.html#stream_two_reading_modes
+
+---
+## 可写流
+
+要创建自定义 Writable 流，您必须调用 new stream.Writable(options) 构造函数并实现 _write() 或 _writev() 方法
+
+```js
+  const { Writable } = require('stream')
+
+  const myWritable = new Writable({
+    write(chunk, encoding, callback) {}
+  })
+```
+
+或者
+
+```js
+  const { Writable } = require('stream')
+
+  class MyCustomWritable extends Writable {
+    _write(chunk, encoding, callback) {
+      // ...
+    }
+  }
+```
+
+### _write方法
+
+
+_write 方法用于将数据发送到底层资源。
+
+您的应用程序代码不得直接调用此方法。相反，它仅由内部 Writable 类方法调用。
+
+该方法接收以下参数：
+
+- chunk 是要写入的值，通常是从您传递给 stream.write() 的字符串转换而来的 Buffer。
+- encoding ，如果块是字符串，将是字符串的字符编码。否则它可能会被忽略。
+- callback 提供的块处理完成时将调用的函数。
+    回调函数接收一个参数，如果写入过程失败，则此参数必须是 Error 对象，如果成功，则必须是 null 。
+
+### 使用可写流
+
+要将数据写入可写流，您需要在流实例上调用 write() 方法。
+
+```js
+  readable.on('data', (chunk) => {
+    writable.write(chunk)
+  })
+```
+
+```js
+const fs = require('fs')
+const { Writable } = require('stream')
+
+const fileWritable = fs.createWriteStream('output.txt')
+
+const myWritable = new Writable({
+  write(chunk, encoding, callback) {
+    // 将接收到的数据块写入到 fileWritable 中，并在数据块处理完毕后调用了回调函数
+    fileWritable.write(chunk, () => {
+      console.log(`Wrote ${chunk.length} bytes to file`)
+      callback()
+    })
+  }
+})
+
+// 通过 pipe 方法将标准输入流和 myWritable 可写流连接起来，从而实现了将从控制台输入的数据写入到文件中的功能
+process.stdin.pipe(myWritable)
+
+
+```
+
+您**也可以使用我们之前学过的 pipe 方法**。
+
+---
+
+## 
 
