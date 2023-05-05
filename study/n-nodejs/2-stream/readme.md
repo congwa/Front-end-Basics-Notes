@@ -338,6 +338,39 @@ server.listen(5000)
 
 注意: 当数据块非常大或者数据块数量非常多时，使用 concat-stream 模块可能会导致内存占用过高，应该避免在这种情况下使用该模块。
 
+---
+## http_server
+
+流不仅适用于文本文件和标准输入/标准输出。来自节点核心的 http.createServer() 处理程序的 http 请求和响应对象也是流。
+
+我们可以将文件流式传输到响应对象：
+
+```js
+const http = require('http')
+const fs = require('fs')
+const server = http.createServer(function (req, res) {
+  fs.createReadStream('file.txt').pipe(res)
+});
+server.listen(process.argv[2])
+```
+
+还可以流式传输请求以使用数据填充文件：
+
+```js
+const http = require('http')
+const fs = require('fs')
+const server = http.createServer(function (req, res) {
+  if (req.method === 'POST') {
+    req.pipe(fs.createWriteStream('post.txt'))
+  }
+  res.end('beep boop\n')
+});
+server.listen(process.argv[2])
+
+```
+
+
+
 
 ---
 ## 流的使用经验总结
