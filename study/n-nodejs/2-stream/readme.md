@@ -1,8 +1,5 @@
 # 流
 
-## 流的使用经验总结
-
-[流的使用经验总结](/study/n-nodejs/2-stream/%E6%B5%81%E7%9A%84%E4%BD%BF%E7%94%A8%E7%BB%8F%E9%AA%8C.md)
 
 ---
 ## stream-adventure
@@ -177,5 +174,133 @@ process.stdin.pipe(myWritable)
 
 ---
 
-## 
+## through2
+
+转换流获取输入数据并对数据应用操作以生成输出数据
+
+使用 write 和 end 函数创建直通流
+
+```js
+const through = require('through2')
+const stream = through(write, end)
+```
+
+为每个可用输入缓冲区调用 write 函数
+
+```js
+
+function write (buffer, encoding, next) {
+  // ...
+}
+```
+
+当没有更多数据时调用 end 函数
+
+```js
+function end () {
+    // ...
+}
+```
+
+在写入函数中，调用 this.push() 生成输出数据，并在准备好接收下一个块时调用 next()
+
+```js
+
+function write (buffer, encoding, next) {
+  this.push('I got some data: ' + buffer + '\n')
+  next()
+}
+
+```
+
+并调用 done() 完成输出
+
+```js
+
+function end (done) {
+  done()
+}
+
+```
+
+write 和 end 都是可选的
+
+如果未指定 write ，则默认实现将输入数据原封不动地传递到输出。
+
+
+如果不指定 end ，则默认实现在输入端结束时调用 this.push(null) 关闭输出端。
+
+确保将 process.stdin 通过管道传输到您的转换流并将您的转换流通过管道传输到 process.stdout ，如下所示：
+
+```js
+process.stdin.pipe(stream).pipe(process.stdout)
+```
+
+要将缓冲区转换为字符串，请调用 buffer.toString() 。
+
+完整示例
+
+```js
+
+const through = require('through2')
+
+// 创建一个 transform 流对象
+const stream = through(function (chunk, encoding, next) {
+  // 将数据转换为大写字母
+  const upperChunk = chunk.toString().toUpperCase()
+  
+  // 将转换后的数据推入输出队列中
+  this.push(upperChunk)
+  
+  // 调用 next() 函数以继续处理下一块数据
+  next()
+})
+
+// 将标准输入流中的数据通过 transform 流传递到标准输出流中
+process.stdin.pipe(stream).pipe(process.stdout)
+
+```
+
+
+---
+
+## split2
+
+split2用于将数据流按照指定的分隔符进行拆分
+
+该模块实现了一个可读流对象，它会将数据流中的数据根据分隔符拆分成多个数据块并发送出去，从而方便我们对数据流进行处理
+
+```js
+const split2 = require('split2');
+const through2 = require('through2');
+
+let lineNum = 1; // 行号
+
+const transformStream = through2(function(chunk, encoding, next) {
+  const line = chunk.toString(); // 将数据块转换为字符串
+  let transformedLine; // 转换后的行字符串
+
+  if (lineNum % 2 === 0) { // 偶数行转为大写
+    transformedLine = line.toUpperCase();
+  } else { // 奇数行转为小写
+    transformedLine = line.toLowerCase();
+  }
+
+  this.push(transformedLine + '\n'); // 推入输出队列中，并加上换行符
+  lineNum++; // 行号自增
+  next(); // 调用 next() 函数，继续处理下一个数据块
+});
+
+process.stdin.pipe(split2()).pipe(transformStream).pipe(process.stdout);
+
+```
+
+
+
+---
+## 流的使用经验总结
+
+[流的使用经验总结-传送门](/study/n-nodejs/2-stream/%E6%B5%81%E7%9A%84%E4%BD%BF%E7%94%A8%E7%BB%8F%E9%AA%8C.md)
+
+
 

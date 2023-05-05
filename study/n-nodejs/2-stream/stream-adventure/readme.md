@@ -17,5 +17,17 @@
 
 ## write_to_me
 
-![write_to_me](/study//imgs/write_to_me.png)
+![write_to_me](/study/imgs/write_to_me.png)
+
+
+## transform
+
+![transform](/study/imgs/transform.png)
+
+
+## lines
+
+![lines](/study/imgs/lines.png)
+
+
 
