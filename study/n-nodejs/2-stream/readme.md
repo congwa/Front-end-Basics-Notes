@@ -295,6 +295,48 @@ process.stdin.pipe(split2()).pipe(transformStream).pipe(process.stdout);
 
 ```
 
+---
+## concat-stream
+
+concat-stream 模块可以用于将多个数据块缓存到内存中，最终合并为一个完整的数据块，并通过回调函数返回。
+
+使用该模块可以简化对数据块的处理，尤其是在数据块数量不确定时。
+
+```js
+const concat = require('concat-stream');
+
+// 创建一个 concat 流对象
+const concatStream = concat(function(data) {
+  const str = data.toString(); // 将合并后的数据块转换成字符串
+  console.log(str);
+});
+
+// 将多个数据块推入 concat 流对象中
+concatStream.write('Hello, ');
+concatStream.write('World!');
+concatStream.end();
+
+```
+
+下面是一个使用 concat-stream 缓冲 POST 内容以便 JSON.parse() 提交的数据的示例：
+
+```js
+const concat = require('concat-stream')
+const http = require('http')
+
+const server = http.createServer(function (req, res) {
+  if (req.method === 'POST') {
+    req.pipe(concat(function (body) {
+      const obj = JSON.parse(body)
+      res.end(Object.keys(obj).join('\n'))
+    }));
+  }
+  else res.end()
+});
+server.listen(5000)
+```
+
+注意: 当数据块非常大或者数据块数量非常多时，使用 concat-stream 模块可能会导致内存占用过高，应该避免在这种情况下使用该模块。
 
 
 ---
