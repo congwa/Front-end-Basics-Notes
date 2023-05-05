@@ -267,7 +267,6 @@ process.stdin.pipe(stream).pipe(process.stdout)
 ## split2
 
 split2用于将数据流按照指定的分隔符进行拆分
-
 该模块实现了一个可读流对象，它会将数据流中的数据根据分隔符拆分成多个数据块并发送出去，从而方便我们对数据流进行处理
 
 ```js
@@ -339,7 +338,7 @@ server.listen(5000)
 注意: 当数据块非常大或者数据块数量非常多时，使用 concat-stream 模块可能会导致内存占用过高，应该避免在这种情况下使用该模块。
 
 ---
-## http_server
+## http_server http_client
 
 流不仅适用于文本文件和标准输入/标准输出。来自节点核心的 http.createServer() 处理程序的 http 请求和响应对象也是流。
 
@@ -369,7 +368,9 @@ server.listen(process.argv[2])
 
 ```
 
+---
 
+## 
 
 
 ---
