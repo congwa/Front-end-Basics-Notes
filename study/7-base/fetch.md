@@ -1,7 +1,11 @@
 # fetch
 
+[fetch不错的文章- 传送门](https://www.cnblogs.com/wonyun/p/fetch_polyfill_timeout_jsonp_cookie_progress.html)
+
 全局的 fetch() 方法用于发起获取资源的请求。
+
 它返回一个 promise，这个 promise 会在请求响应后被 resolve，并传回 Response 对象
+
 Window 和 WorkerGlobalScope 都实现了 WorkerOrGlobalScope
 
 ```js
@@ -24,8 +28,6 @@ Promise<Response> fetch(input[, init]);
 
 <details>
 <summary>TODO:如果get请求的数据且没有过期(此数据来源于数据库),此时更新了数据库，如何保证再次get请求到最新的数据，且刷新缓存？</summary>
-
- 正在为您搜索：get请求、数据、过期、数据库
 
 为了保证再次 GET 请求能够获取到最新的数据并刷新缓存，可以在服务器端设置响应头，包括以下两种方式：
 
