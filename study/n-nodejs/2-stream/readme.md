@@ -32,6 +32,9 @@ stream-adventure verify 01.js
 
 流存在于许多 Node.js 模块中，例如 http.request() 、 zlib.createGzip() 、 fs.createReadStream() 、 process.stdout ...所有这些返回流。
 
+![stream](/study/imgs/stream.webp)
+![stream2](/study/imgs/steam2.webp)
+
 ---
 ### pipe 方法
 
@@ -656,6 +659,10 @@ fs.createReadStream('file.tar').pipe(parser)
 ## 流的简单总结
 
 [流的使用经验总结-传送门](/study/n-nodejs/2-stream/%E6%B5%81%E7%9A%84%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93.md)
+
+## 参考资料
+
+[流的实现原理-传送门](https://juejin.cn/post/7070827961443680269)
 
 
 
