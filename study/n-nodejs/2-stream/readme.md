@@ -612,9 +612,27 @@ pipeline(combinedStream, (err) => {
 这里需要注意的是，虽然 stream-combiner 的执行过程与 pipe 方法非常相似，并且具有相同的性能优点，但是它可以在管道中添加任意数量的流。此外，由于 stream-combiner 可以在其中的任何一条流发生错误时，停止整个管道流，因此它可以帮助我们轻松处理错误
 
 ---
-## 流的使用经验总结
+## crypt
 
-[流的使用经验总结-传送门](/study/n-nodejs/2-stream/%E6%B5%81%E7%9A%84%E4%BD%BF%E7%94%A8%E7%BB%8F%E9%AA%8C.md)
+crypto可以使用流
+
+```js
+
+const crypto = require('crypto')
+// 使用了 Node.js 内置的 crypto 模块中的 createDecipher 方法来创建一个 RC4 解密器，并将其输出流连接到标准输出流中
+const stream = crypto.createDecipher('RC4', 'robots')
+stream.pipe(process.stdout)
+stream.write(Buffer([ 135, 197, 164, 92, 129, 90, 215, 63, 92 ]))
+stream.end()
+
+```
+
+不要自己调用 .write() ，只需将 stdin 通过管道传输到您的解密器即可
+
+---
+## 流的简单总结
+
+[流的使用经验总结-传送门](/study/n-nodejs/2-stream/%E6%B5%81%E7%9A%84%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93.md)
 
 
 
