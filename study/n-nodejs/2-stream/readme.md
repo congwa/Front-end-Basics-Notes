@@ -370,6 +370,70 @@ server.listen(process.argv[2])
 
 ---
 
+## websockets
+
+ws模块用于创建websocket服务端和客户端。
+
+关于[websocket](/study/n-nodejs/1-base/2-websocket/)更多细节，请看这里，包含如何建立socket连接
+
+```js
+const WebSocket = require('ws')
+
+// 创建一个 WebSocket 服务器并监听指定端口号
+const wss = new WebSocket.Server({ port: 8080 })
+
+// 处理客户端连接事件
+wss.on('connection', function connection(ws) {
+  console.log('client connected')
+
+  // 处理接收到的消息事件
+  ws.on('message', function incoming(message) {
+    console.log('received: %s', message)
+
+    // 向客户端发送消息
+    ws.send(`received: ${message}`)
+  })
+
+  // 处理连接关闭事件
+  ws.on('close', function close() {
+    console.log('client disconnected')
+  })
+})
+
+// 创建一个 WebSocket 客户端并连接到指定服务器地址
+const ws = new WebSocket('ws://localhost:8080')
+
+// 处理连接成功事件
+ws.on('open', function open() {
+  console.log('connected to server')
+
+  // 向服务器发送消息
+  ws.send('hello server')
+})
+
+// 处理接收到的消息事件
+ws.on('message', function incoming(data) {
+  console.log('received: %s', data)
+})
+
+// 处理连接关闭事件
+ws.on('close', function close() {
+  console.log('disconnected from server')
+})
+
+```
+
+同时也可以使用流
+
+```js
+const WebSocket = require('ws')
+
+const ws = new WebSocket('ws://localhost:8099')
+const stream = WebSocket.createWebSocketStream(ws)
+stream.write('hello\n')
+stream.pipe(process.stdout)
+```
+
 ## 
 
 
