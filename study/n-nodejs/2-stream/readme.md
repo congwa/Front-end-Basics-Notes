@@ -630,6 +630,29 @@ stream.end()
 不要自己调用 .write() ，只需将 stdin 通过管道传输到您的解密器即可
 
 ---
+
+## tar
+
+tar 模块有一个 tar.Parse() 构造函数，它可以自动解压缩 gzipped tar 文件（如果检测到）并为 tar 输入中的每个文件发出 entry 事件
+
+每个 entry 对象都是来自存档的文件内容的可读流，并且：
+
+```js
+`entry.type` is the kind of file ('File', 'Directory', etc)
+`entry.path` is the file path
+```
+
+```js
+const tar = require('tar')
+const parser = new tar.Parse()
+parser.on('entry', function (e) {
+    console.dir(e)
+});
+const fs = require('fs')
+fs.createReadStream('file.tar').pipe(parser)
+```
+
+---
 ## 流的简单总结
 
 [流的使用经验总结-传送门](/study/n-nodejs/2-stream/%E6%B5%81%E7%9A%84%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93.md)
