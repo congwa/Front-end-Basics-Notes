@@ -572,7 +572,44 @@ duplex.end();
 
 ---
 
+## stream-combiner
 
+stream-combiner用于将多个流组合成一个可以使用的流
+
+这个模块在处理大型数据时非常有用，因为它允许你将处理步骤分解成一系列小操作，并将它们组合在一起来生成最终的输出。这种处理方式更加高效，因为它允许在处理数据时逐步清理内存，避免了在单个步骤中使用过多的内存。
+
+stream-combiner 模块支持创建一个新的可写流，向其传递多个通过管道 (pipeline) 连接的可读流，然后将它们组合成一个可写流。如果其中一个可读流出现错误，整个管道会停止并关闭，这可以避免资源泄漏和错误的输出。
+
+该模块的工作方式与 duplexer2 类似，但它支持多个流的组合，而 duplexer2 只支持两个流的组合。
+
+```js
+const fs = require('fs');
+const zlib = require('zlib');
+const { pipeline } = require('stream');
+const combine = require('stream-combiner');
+
+const readStream = fs.createReadStream('input.txt');
+const writeStream = fs.createWriteStream('output.txt');
+const gzipStream = zlib.createGzip();
+const deflateStream = zlib.createDeflate();
+
+// 使用 stream-combiner 将多个流拼接起来成为一个新的流
+const combinedStream = combine(readStream, gzipStream, deflateStream, writeStream);
+
+// 使用 pipeline 方法处理管道中的错误和关闭操作
+pipeline(combinedStream, (err) => {
+  if (err) {
+    console.error('Pipeline failed', err);
+  } else {
+    console.log('Pipeline succeeded');
+  }
+});
+
+```
+
+创建了一个可读流（readStream）、两个可写流（deflateStream 和 gzipStream）和一个最终的可写流（writeStream）。使用 stream-combiner 将多个流拼接起来成为一个新的流（combinedStream），并将其传递给 pipeline 方法用于处理错误和关闭事件
+
+这里需要注意的是，虽然 stream-combiner 的执行过程与 pipe 方法非常相似，并且具有相同的性能优点，但是它可以在管道中添加任意数量的流。此外，由于 stream-combiner 可以在其中的任何一条流发生错误时，停止整个管道流，因此它可以帮助我们轻松处理错误
 
 ---
 ## 流的使用经验总结

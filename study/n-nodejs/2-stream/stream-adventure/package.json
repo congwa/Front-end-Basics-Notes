@@ -13,8 +13,10 @@
     "concat-stream": "^2.0.0",
     "duplexer2": "^0.1.4",
     "split2": "^4.2.0",
+    "stream-combiner": "^0.2.2",
     "through2": "^4.0.2",
     "trumpet": "^1.7.2",
-    "ws": "^8.13.0"
+    "ws": "^8.13.0",
+    "zlib": "^1.0.5"
   }
 }
