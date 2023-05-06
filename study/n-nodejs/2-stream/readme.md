@@ -481,7 +481,96 @@ tr.select('p', el => {
 
 ```
 
+---
 
+## Duplex
+
+它实现了同时可读可写的双工流,用于双向通讯
+
+Duplex 流可以将输入的数据转换成输出的数据，并支持在数据传输过程中进行处理和变换
+
+每个 Duplex 流都包含一个内部缓冲区，用于暂存需要处理的数据。
+
+当调用 .write() 方法时，数据会被写入缓冲区；当调用 .read() 方法时，数据则从缓冲区中被读取并输出。Duplex 流的两端可以独立地进行写入和读取操作，不必等待另一端的响应。
+
+```js
+const { Duplex } = require('stream');
+
+// 创建一个自定义的 Duplex 流
+class MyDuplex extends Duplex {
+  constructor(options) {
+    super(options);
+  }
+
+  // 实现 _read 方法，从缓冲区中读取数据并输出
+  _read(size) {
+    this.push('hello');
+    this.push('world');
+    this.push(null);
+  }
+
+  // 实现 _write 方法，将输入的数据转换成大写字母，并将其写入缓冲区中
+  _write(chunk, enc, cb) {
+    const upperChunk = chunk.toString().toUpperCase();
+    this.push(upperChunk);
+    cb();
+  }
+}
+
+// 创建一个 MyDuplex 流实例
+const myDuplex = new MyDuplex();
+
+// 监听 data 事件，输出数据并将其写回流中
+myDuplex.on('data', data => {
+  console.log(data.toString());
+  myDuplex.write(data);
+});
+
+// 结束流
+myDuplex.end();
+
+```
+
+---
+## duplexer2
+
+```js
+
+const { Readable, Writable } = require('stream');
+const duplexer2 = require('duplexer2');
+
+// 创建一个可读流
+const input = new Readable({
+  read() {
+    this.push('hello');
+    this.push(null);
+  },
+});
+
+// 创建一个可写流
+const output = new Writable({
+  write(chunk, enc, cb) {
+    console.log(chunk.toString().trim());
+    cb();
+  },
+});
+
+// 将可读流和可写流组合成双工流
+const duplex = duplexer2(output, input);
+
+// 从双工流中读取数据
+duplex.on('data', data => console.log(data.toString().trim()));
+
+// 向双工流中写入数据
+duplex.write('world');
+
+// 结束双工流
+duplex.end();
+
+```
+
+
+---
 
 
 

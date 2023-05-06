@@ -51,3 +51,17 @@
 ![html_stream](/study/imgs/html_stream.png)
 
 
+## duplexer
+
+
+![duplexer](/study/imgs/duplexer.png)
+
+
+## duplexer_redux
+
+![duplexer_redux](/study/imgs/duplexer_redux.png)
+
+
+
+
+
