@@ -434,7 +434,55 @@ stream.write('hello\n')
 stream.pipe(process.stdout)
 ```
 
-## 
+---
+## trumpet
+
+trumpet 是一个基于 Node.js 平台的 HTML 解析器，它可以让你使用 CSS选择器来查找和操作 HTML DOM 元素。
+
+trumpet 通过了 NodeStream 流的方式来解析 HTML，因此可以非常高效地处理大量的数据。
+
+```html
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Example</title>
+</head>
+<body>
+  <h1>Hello World</h1>
+  <p>This is an example page.</p>
+</body>
+</html>
+
+```
+
+解析以上html
+
+```js
+
+const trumpet = require('trumpet');
+const fs = require('fs');
+
+const tr = trumpet();
+const stream = fs.createReadStream('index.html').pipe(tr);
+
+tr.select('title', el => {
+  el.createReadStream().on('data', data => {
+    console.log(`Title: ${data.toString().trim()}`);
+  });
+});
+
+tr.select('p', el => {
+  el.createReadStream().on('data', data => {
+    console.log(`Content: ${data.toString().trim()}`);
+  });
+});
+
+```
+
+
+
 
 
 ---

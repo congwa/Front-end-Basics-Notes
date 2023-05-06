@@ -46,3 +46,8 @@
 ![websockets](/study/imgs/websockets.png)
 
 
+## html_stream
+
+![html_stream](/study/imgs/html_stream.png)
+
+
