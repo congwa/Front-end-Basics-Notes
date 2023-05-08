@@ -1,5 +1,8 @@
 # vue2
 
+## 响应式原理
+
+![响应式原理](/study/imgs/vue2响应式原理.jpeg)
 ## 数组部分
 
 <details>
