@@ -12,3 +12,8 @@
 [google sitelinks](https://zhuanlan.zhihu.com/p/431085760?utm_source=wechat_session&utm_medium=social&s_r=0)
 
 [sitelinks规则](https://www.zhihu.com/question/41938880/answer/2681118583?utm_id=0)
+
+
+## robots
+
+[https://leerob.io/blog/nextjs-sitemap-robots](https://leerob.io/blog/nextjs-sitemap-robots)
