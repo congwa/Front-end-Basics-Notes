@@ -4,9 +4,9 @@
 
 
 
-## 站长工具
+## 百度站长工具
 
-[站长工具](https://ziyuan.baidu.com/college/courseinfo?id=267&page=3)
+[百度站长工具](https://ziyuan.baidu.com/college/courseinfo?id=267&page=3)
 
 ## 360sitemaps
 
