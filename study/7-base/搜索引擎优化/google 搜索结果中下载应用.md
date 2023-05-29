@@ -8,6 +8,10 @@
 
 [在 Google 搜索中显示 iOS 应用中的内容](https://developers.google.com/search/blog/2015/05/surfacing-content-from-ios-apps-in?hl=zh-cn)
 
+[一个视频](https://v.youku.com/v_show/id_XMTU4NDMzODAyMA==.html)
+
+[通用链接的一个不错的作者介绍](https://zhuanlan.zhihu.com/p/22108495)
+
 
 ## deep link
 
@@ -17,6 +21,7 @@
 建议使用[通用链接](https://developer.apple.com/documentation/Xcode/allowing-apps-and-websites-to-link-to-your-content)，将用户从搜索结果、网站和其他应用直接链接到您应用中的特定内容
 
 ### android
+
 
 建议使用 [Android App Links](https://developer.android.com/training/app-links?hl=zh-cn) 将用户从搜索结果、网站和其他应用直接链接到您应用中的特定内容
 > android应用链接简介的内容： 由于 Android 应用链接利用的是 HTTP 网址以及与网站的关联，因此未安装您的应用的用户会直接转到您的网站中对应的内容
