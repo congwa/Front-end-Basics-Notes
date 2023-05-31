@@ -74,7 +74,7 @@
 ## 判断对象是否存在某属性
 
 ```javascript
-  //hasOwnProperty方法可以检查对象是否真正“自己拥有”某属性或者方法
+  //hasOwnProperty方法可以检查对象是否真正"自己拥有"某属性或者方法
   // in in运算符只能检查某个属性或方法是否可以被对象访问，不能检查是否是自己的属性或方法
   const hasOwn = (target, key) => Object.prototype.hasOwnProperty.call(target,key)
 ```

@@ -73,7 +73,7 @@ THREE.OrbitControls = function ( object, domElement ) {
     
         // This option actually enables dollying in and out; left as "zoom" for backwards compatibility.
         // Set to false to disable zooming
-        //这个选项实际上可以使进出进入; 为了向后兼容，保留为“缩放”。
+        //这个选项实际上可以使进出进入; 为了向后兼容，保留为"缩放"。
     //设置为false以禁用缩放
         this.enableZoom = true;
         this.zoomSpeed = 1.0;

@@ -143,7 +143,7 @@ export const Counter = (props: { value: number }) => {
 
 ### 动态创建事件函数防止内存泄漏的处理
 
-qwik 的作者 miško hevery 在 Hydration is Pure Overhead 中明确的表示过 ，qwik 会在每次事件执行完毕后释放函数，相当于每次事件执行完毕都会进行一次“去水合”的过程
+qwik 的作者 miško hevery 在 Hydration is Pure Overhead 中明确的表示过 ，qwik 会在每次事件执行完毕后释放函数，相当于每次事件执行完毕都会进行一次"去水合"的过程
 qwik 这种并不在内存中记录任何状态的方式恰恰对于内存的占用比 dyration 更加轻量化
 
 ## 总结

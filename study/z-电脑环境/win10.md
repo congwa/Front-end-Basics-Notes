@@ -1,7 +1,7 @@
 
 # [死机问题](https://www.v2ex.com/t/893312)
 
-如果是 intel 的电脑可以试试把这个 Intel(R) Management Engine Interface #1 设备的“允许关闭设备以节约电源”选项关闭
+如果是 intel 的电脑可以试试把这个 Intel(R) Management Engine Interface #1 设备的"允许关闭设备以节约电源"选项关闭
 
 另外这情况很像是我之前看到一篇分析 windows8 消费者预览版的情况，现将原文复制下来
 

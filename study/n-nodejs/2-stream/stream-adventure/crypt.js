@@ -1,6 +1,6 @@
 /**
  
-您的程序将在 process.argv[2] 上获得密码，在 process.argv[3] 上获得初始化值，并且“aes256”加密数据将写入标准输入。
+您的程序将在 process.argv[2] 上获得密码，在 process.argv[3] 上获得初始化值，并且"aes256"加密数据将写入标准输入。
 
 只需解密数据并将结果流式传输到 process.stdout。
 

@@ -25,3 +25,63 @@ access_log syslog:server=[2001:db8::1]:12345,facility=local7,tag=nginx,severity=
 ```
 
 从 1.7.1 版本开始可以记录到 syslog。但是作为商业订阅的一部分，系统日志从 1.5.3 版本开始可用。
+
+
+## combined
+
+combined  是一个 Nginx 日志格式，它包含了比较详细的请求信息。
+
+combined 格式的日志一般包含以下字段：
+
+- $remote_addr：客户端 IP 地址。
+- $remote_user：客户端用户名。
+- $time_local：本地时间，格式类似于 [06/Jan/2022:08:09:35 +0000]。
+- $request：HTTP 请求方法、URI 和协议版本。
+- $status：HTTP 响应状态码。
+- $body_bytes_sent：发送给客户端的响应正文大小。
+- $http_referer：HTTP Referer 头部值。
+- $http_user_agent：HTTP User Agent 头部值。
+
+以下是一个应用了 combined 日志格式的 Nginx 配置示例：
+
+```nginx
+http {
+    log_format  mylog  '$remote_addr - $remote_user [$time_local] '
+                      '"$request" $status $body_bytes_sent '
+                      '"$http_referer" "$http_user_agent"';
+
+    server {
+        listen       80;
+        server_name  example.com;
+
+        access_log   /var/log/nginx/example.com.access.log mylog;
+
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+        }
+    }
+}
+
+```
+
+在上面的配置中，首先定义了一个名为 mylog 的日志格式，并将它应用到 server 中的access_log 指令。然后，在 server 中的 location 指令下，配置了一个简单的静态文件服务
+
+
+当你的用户访问了 `http://example.com/hello-world.html` 页面时，应用了 `mylog` 日志格式，将会输出以下的 log 样例：
+
+```nginx
+127.0.0.1 - - [31/May/2023:04:28:49 +0000] "GET /hello-world.html HTTP/1.1" 200 1234 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
+```
+
+其中：
+
+- `$remote_addr` 输出为 `127.0.0.1`，表示客户端的 IP 地址为本地。
+- `$remote_user` 和 `-` 都显示为 `-`，表示没有启用基本认证模块。
+- `$time_local` 输出为 `[31/May/2023:04:28:49 +0000]`，表示发生时间为 2023 年 5 月 31 日 4 时 28 分 49 秒（UTC+0）。
+- `$request` 输出为 `"GET /hello-world.html HTTP/1.1"`，表示客户端发送了 GET 请求，请求的 URI 是 `/hello-world.html`，协议版本是 HTTP/1.1。
+- `$status` 输出为 `200`，表示服务器返回了 200 OK 状态码。
+- `$body_bytes_sent` 输出为 `1234`，表示服务器返回的响应正文大小为 1234 字节。
+- `$http_referer` 输出为 `-`，表示客户端没有在请求中包含 Referer 头部。
+- `$http_user_agent` 输出为 `"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"`，表示客户端使用的是 Chrome 67 浏览器。
+

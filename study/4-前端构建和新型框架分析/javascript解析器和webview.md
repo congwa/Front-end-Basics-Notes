@@ -206,7 +206,7 @@ Chromium，而Blink其实就是Chromium整体的一部分
   
 
 ### Chromium
-Chromium是一个免费的开源软件项目，一直由谷歌维护。Chromium 为Google Chrome提供了绝大多数源代码，因此 Google 选择了“Chromium”这个名称。可以理解为 Chromium + 集成 Google 产品 = Google Chrome
+Chromium是一个免费的开源软件项目，一直由谷歌维护。Chromium 为Google Chrome提供了绝大多数源代码，因此 Google 选择了"Chromium"这个名称。可以理解为 Chromium + 集成 Google 产品 = Google Chrome
 - 使用blink引擎
 - 使用v8虚拟机
 - 在android4.4以上进行使用
