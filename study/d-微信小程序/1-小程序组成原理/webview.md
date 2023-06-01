@@ -14,7 +14,7 @@
 ## webview及基础模块
 
 打开微信开发者工具，点击调试，调试微信开发者工具
-![调试](/study/imgs/imgs/%E5%B0%8F%E7%A8%8B%E5%BA%8F-webview.jpg)
+![调试](/study/imgs/%E5%B0%8F%E7%A8%8B%E5%BA%8F-webview.jpg)
 
 看到一些webview标签，src路径和route的媒体属性重点看一下， src就是当前页面在项目中的路径，这就是所谓的渲染层
 
