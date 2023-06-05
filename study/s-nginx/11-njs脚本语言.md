@@ -74,7 +74,7 @@ function statusCount(r) {
 
 上面的代码中，定义了一个 statusCount 函数，该函数会对传入的请求对象进行处理，并使用 r.subrequest 方法发送子请求获取响应状态码，然后根据状态码数量对状态码进行统计，并输出结果。
 
-在代码中通过 require('nginx/constant') 引入了 ngx_http_js_module 模块提供的 constant 对象。该对象包含了 Nginx 内置的一些常量，例如 NGX_HTTP_OK、NGX_HTTP_MOVED_TEMPORARILY 等，方便我们在 JavaScript 中调用。
+在代码中通过 require('nginx/constant') 引入了 `ngx_http_js_module` 模块提供的 constant 对象。该对象包含了 Nginx 内置的一些常量，例如 NGX_HTTP_OK、NGX_HTTP_MOVED_TEMPORARILY 等，方便我们在 JavaScript 中调用。
 
 
 ## njs中
