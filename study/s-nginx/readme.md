@@ -1,9 +1,13 @@
 # nginx
 
 
-[nginx官方文档-传送门](https://nginx.org/en/docs/)
+- [nginx官方文档-传送门](https://nginx.org/en/docs/)
 
-![nginx](/study/imgs/nginx.webp)
+- ![nginx](/study/imgs/nginx.webp)
+
+- ![nginx](/study/imgs/nginxplus.png)
+
+- [NGINX Plus增强能力系列专题](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzUzMzk5Njc4NQ==&action=getalbum&album_id=1486464352936394755&scene=173&from_msgid=2247485266&from_itemidx=2&count=3&nolastread=1#wechat_redirect)
 
 ```nginx
 
