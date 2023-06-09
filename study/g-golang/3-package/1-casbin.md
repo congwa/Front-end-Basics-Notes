@@ -29,7 +29,7 @@ effect 根据对请求运用匹配器得出的所有结果进行汇总，来决�
 
 下面这张图很好地描绘了这个过程：
 
-![Casbin 模型解析流程](https://img-blog.csdnimg.cn/20210619090949890.png)
+![Casbin 模型解析流程](/study/imgs/casbin1.png)
 
 我们首先编写模型文件：
 
@@ -690,6 +690,8 @@ dajun CANNOT read mydata
 ## 参考
 
 [go-每日一库-casbin](https://github.com/darjun/go-daily-lib/tree/master/casbin)
+[使用casbin不错的参考模版项目-简单模版端](https://github.com/qifengzhang007/GinSkeleton)
+[使用casbin不错的参考模版项目-包含业务端](https://github.com/qifengzhang007/ginskeleton-admin2-backend)
 
 
 
