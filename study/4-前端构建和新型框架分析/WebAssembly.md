@@ -2,7 +2,7 @@
 
 
 - 这里是我对[wasm在网站上的应用总结仓库](https://github.com/congwa/wasm-codecs-browser)
-
+- [走进 WebAssembly 的世界](https://juejin.cn/column/7210666370487681082)
 
 ## JS检测PNG图片是否有透明背景
 
