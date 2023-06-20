@@ -15,8 +15,6 @@
 
 ## 数据注水hydrate
 
-TODO：猜测触发渲染钩子后，才会进行注水操作
-
 客户端"浸泡"的过程实际上是重新创建了组件树，将新生的水（state、props、context等）注入其中，并将鲜活的组件树塞进服务端渲染的干瘪躯壳里
 所以在 SSR 模式下，客户端有一段时间是无法正常交互的，注水完成之后才能彻底复活（单向数据流和交互行为都恢复正常）
 
@@ -55,9 +53,8 @@ Vue 会检查客户端代码生成的虚拟 DOM 和服务器端渲染生成的 H
 
 ## ISR Incremental Static Regeneration
 
-SR，增量静态生成，在访问时生成静态页面，在 Next.js 中，它比 SSG 方案只需要加了一个参数revalidate
+ISR，增量静态生成，在访问时生成静态页面，在 Next.js 中，它比 SSG 方案只需要加了一个参数revalidate
 
-TODO: 示例代码
 
 ## React 18 Streaming SSR 流式服务端渲染 (跳过花费时间长的区域)
 

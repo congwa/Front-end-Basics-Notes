@@ -7,6 +7,7 @@
 那就探索一下吧。
 
 嗯。读帖子又发现了一个方案。
+
 TODO: Remix 的 HTTP stale-while-revalidate 缓存指令. 这又是啥玩意，之后研究一下。
 
 ## 传统水合过程
