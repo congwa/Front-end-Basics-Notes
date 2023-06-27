@@ -463,6 +463,7 @@ func main() {
 方法的调用也是类似的：
 
 ```go
+// 利用反射进行方法调用
 type M struct {
   a, b int
   op   rune
@@ -507,4 +508,226 @@ func main() {
 // 4
 ```
 
+以上是在编译期明确知道方法名的情况下发起调用。
+
+如果只给一个结构体对象，通过参数指定具体调用哪个方法该怎么做呢？这需要以下方法：
+
+```go
+
+// 通过参数指定具体调用哪个方法
+type Math struct {
+  a, b int
+}
+
+func (m Math) Add() int {
+  return m.a + m.b
+}
+
+func (m Math) Sub() int {
+  return m.a - m.b
+}
+
+func (m Math) Mul() int {
+  return m.a * m.b
+}
+
+func (m Math) Div() int {
+  return m.a / m.b
+}
+
+func invokeMethod(obj interface{}, name string, args ...interface{}) {
+  v := reflect.ValueOf(obj)
+  m := v.MethodByName(name)
+
+  argsV := make([]reflect.Value, 0, len(args))
+  for _, arg := range args {
+    argsV = append(argsV, reflect.ValueOf(arg))
+  }
+
+  rets := m.Call(argsV)
+
+  fmt.Println("ret:")
+  for _, ret := range rets {
+    fmt.Println(ret.Interface())
+  }
+}
+
+func main() {
+  m := Math{a: 10, b: 2}
+  invokeMethod(m, "Add")
+  invokeMethod(m, "Sub")
+  invokeMethod(m, "Mul")
+  invokeMethod(m, "Div")
+}
+```
+
+[使用反射的方法调用可以实现简易的rpc调用-](/study/g-golang/3-package/4-reflect/http-rpc)
+
+
+### 设置值
+
+**可寻址**：可寻址是可以通过反射获得其地址的能力。可寻址与指针紧密相关。所有通过reflect.ValueOf()得到的reflect.Value都不可寻址。因为它们只保存了自身的值，对自身的地址一无所知。例如指针p *int保存了另一个int数据在内存中的地址，但是它自身的地址无法通过自身获取到，因为在将它传给reflect.ValueOf()时，其自身地址信息就丢失了。我们可以通过reflect.Value.CanAddr()判断是否可寻址
+
+```go
+
+func main() {
+  x := 2
+
+  a := reflect.ValueOf(2)
+  b := reflect.ValueOf(x)
+  c := reflect.ValueOf(&x)
+  fmt.Println(a.CanAddr()) // false
+  fmt.Println(b.CanAddr()) // false
+  fmt.Println(c.CanAddr()) // false
+}
+
+```
+
+虽然指针不可寻址，但是我们可以在其反射对象上调用Elem()获取它指向的元素的reflect.Value。这个reflect.Value就可以寻址了，因为是通过reflect.Value.Elem()获取的值，可以记录这个获取路径。因而得到的reflect.Value中保存了它的地址：
+
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+func main() {
+	num := 42
+	value := reflect.ValueOf(num)
+
+  // 指针类型
+	if value.Kind() == reflect.Ptr {
+		value = value.Elem()
+	}
+
+  // int
+	if value.Kind() == reflect.Int {
+		intValue := value.Interface().(int)
+		fmt.Println(intValue)
+	} else {
+		fmt.Println("不是int类型")
+	}
+}
+
+```
+
+```go
+d := c.Elem()
+fmt.Println(d.CanAddr())
+```
+
+另外通过切片反射对象的Index(i)方法得到的reflect.Value也是可寻址的，我们总是可以通过切片得到某个索引的地址。通过结构体的指针获取到的字段也是可寻址的：
+
+```go
+
+type User struct {
+  Name string
+  Age  int
+}
+
+s := []int{1, 2, 3}
+sv := reflect.ValueOf(s)
+e := sv.Index(1)
+fmt.Println(e.CanAddr()) // true
+
+u := &User{Name: "dj", Age: 18}
+uv := reflect.ValueOf(u)
+f := uv.Elem().Field(0)
+fmt.Println(f.CanAddr()) // true
+
+```
+
+
+如果一个reflect.Value可寻址，我们可以调用其Addr()方法返回一个reflect.Value，包含一个指向原始数据的指针。然后在这个reflect.Value上调用Interface{}方法，会返回一个包含这个指针的interface{}值。如果我们知道类型，可以使用类型断言将其转为一个普通指针。通过普通指针来更新值：
+
+```go
+func main() {
+  x := 2
+  d := reflect.ValueOf(&x).Elem()
+  px := d.Addr().Interface().(*int)
+  *px = 3
+  fmt.Println(x) // 3
+
+  // 注意区分
+  // value := reflect.ValueOf(x)
+  // intValue := value.Interface().(int)
+}
+```
+
+这样的更新方法有点麻烦，我们可以直接通过可寻址的reflect.Value调用Set()方法来更新，不用通过指针：
+
+```go
+d.Set(reflect.ValueOf(4))
+fmt.Println(x) // 4
+```
+
+如果传入的类型不匹配，会 panic。reflect.Value为基本类型提供特殊的Set方法：SetInt、SetUint、SetFloat等：
+
+```go
+d.SetInt(5)
+fmt.Println(x) // 5
+```
+
+**反射可以读取未导出结构字段的值，但是不能更新这些值。一个可寻址的reflect.Value会记录它是否是通过遍历一个未导出字段来获得的，如果是则不允许修改。所以在更新前使用CanAddr()判断并不保险。CanSet()可以正确判断一个值是否可以修改。**
+
+CanSet()判断的是可设置性，它是比可寻址性更严格的性质。如果一个reflect.Value是可设置的，它一定是可寻址的。反之则不然：
+
+```go
+
+type User struct {
+  Name string
+  age  int
+}
+
+u := &User{Name: "dj", age: 18}
+uv := reflect.ValueOf(u)
+name := uv.Elem().Field(0)
+fmt.Println(name.CanAddr(), name.CanSet()) // true true
+age := uv.Elem().Field(1)
+fmt.Println(age.CanAddr(), age.CanSet()) // true false
+
+name.SetString("lidajun")
+fmt.Println(u) // &{lidajun 18}
+// 报错
+// age.SetInt(20)
+
+```
+
+### StructTag
+
+在定义结构体时，可以为每个字段指定一个标签，我们可以使用反射读取这些标签：
+
+
+```go
+type User struct {
+  Name string `json:"name"`
+  Age  int    `json:"age"`
+}
+
+func main() {
+  u := &User{Name: "dj", Age: 18}
+  t := reflect.TypeOf(u).Elem()
+  for i := 0; i < t.NumField(); i++ {
+    f := t.Field(i)
+    fmt.Println(f.Tag)
+  }
+}
+// json:"name"
+// json:"age"
+
+```
+
+使用json包获取tag的值
+
+```go
+  // 使用json.Marshal获取序列化后的JSON字符串
+	jsonBytes, _ := json.Marshal(u)
+	fmt.Println(string(jsonBytes))
+
+  // Field: Name, Tag Value: name
+  // Field: Age, Tag Value: age
+  // Field: IsAdmin, Tag Value: -
+```
 
