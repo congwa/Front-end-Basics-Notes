@@ -14,6 +14,154 @@
 
 > 插件的钩子始终在整个生命周期中
 
+### loader基础
+
+loader本质上是一个函数,参数content是一段字符串,存储着文件的内容,最后将loader函数导出就可以提供给webpack使用了.
+
+```js
+// loader函数
+module.exports = function (content){
+  console.log(this.query); // { name: 'hello' }
+  return content;
+}
+
+// loader使用this.callback方法
+module.exports = function (content){
+  this.callback(null,content);  
+}
+
+//webpack.config.js
+//webpack配置
+module.exports = {
+   module:{
+    rules:[
+      {
+        test:/\.js$/, // 正则筛选.js结尾的文件
+        use:[
+          {
+            loader:path.resolve(__dirname,"./error-loader.js"),
+            options:{
+              name:"hello"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+项目一旦启动打包,webpack检测到.js文件,它就会把文件的代码字符串传递给error-loader.js导出的loader函数执行.
+
+我们上面编写的loader函数并没有对代码字符串content做任何操作,直接返回了结果.那么我们自定义loader的目的就是为了对content源代码做各种数据操作,再将操作完的结果返回.
+
+比如我们可以使用正则表达式将content中所有的console.log语句全部去掉,那么最后我们生成的打包文件里就不会包含console.log.
+
+另外我们在开发一些功能复杂的loader时,可以接收配置文件传入的参数.例如上面webpack.config.js中给error-loader传入了一个对象{name:"hello"},那么在自定义的loader函数中可以通过this.query获取到参数.
+
+loader函数除了直接使用return将content返回之外,还可以使用this.callback(代码如下)达到相同的效果.
+
+this.callback能传递以下四个参数.第三个参数和第四个参数可以不填.this.callback传递的参数会发送给下一个loader函数接受,每一个loader函数形成了流水线上的一道道工序,最终将代码处理成期待的结果.
+
+- 第一个参数为错误信息,没有出错可以填null
+- 第二个参数为content,也是要进行数据操作的目标
+- 第三个参数为sourceMap,选填项.它将打包后的代码与源码链接起来,方便开发者调试,一般通过babel生成.
+- 第四个参数为meta额外信息,选填项.
+
+以上介绍的内容都是使用同步的方式编写,万一**loader函数里面需要做一些异步的操作**就要采用如下方式
+
+this.async()调用后返回一个callback函数,等到异步操作完,就可以继续使用callback将content返回.
+
+```js
+//上一个loader可能会传递sourceMap和meta过来,没穿就为空
+module.exports = function (content,sourceMap,meta){
+  const callback = this.async();
+  setTimeout(()=>{ // 模拟异步操作
+     callback(null,content);  
+  },1000)
+}
+```
+
+#### 异常捕捉的loader编写
+
+loader函数的第一个参数content,我们可以利用正则表达式修改content.但如果实现的功能比较复杂,正则表达式会变得异常复杂难以开发.
+
+主流的方法是将代码字符串转化对象,我们对对象进行数据操作,再将操作完的对象转化为字符串返回.
+
+这就可以**借助babel相关的工具帮助我们实现这一目的**,代码如下.(如果对babel不熟悉的同学可以忽略这一小节,以后有机会单独对babel展开分析)
+
+- @babel/parser模块首先将源代码content转化成ast树,再通过@babel/traverse遍历ast树,寻找async函数的节点.
+- async函数的节点被寻找到后,通过@babel/types模块给async函数添加try,catch表达式包裹,再替换原来的旧节点.
+- 最后使用@babel/generator模块将操作后的ast树转化成目标代码返回.
+
+```js
+const parser = require("@babel/parser");
+const traverse = require("@babel/traverse").default;
+const generate = require('@babel/generator').default;
+const t = require("@babel/types");
+
+const ErrorLoader =  function (content,sourceMap,meta){
+  
+  const ast = parser.parse(content); // 将代码转换成为ast树
+
+  traverse(ast,{
+    //遍历函数表达式
+    FunctionDeclaration(path){ 
+        
+        //判断当前节点是不是async函数
+        const isAsyncFun = t.isFunctionDeclaration(path.node,{async:true});
+
+        if(!isAsyncFun){ // 不是async函数就停止操作
+          return ;
+        }
+
+        const bodyNode = path.get("body");
+
+        // 是不是大括号表达式
+        if(t.isBlockStatement(bodyNode)){
+
+           const FunNode = bodyNode.node.body;
+
+           if(FunNode.length == 0) { // 空函数
+             return; 
+           }
+
+           if(FunNode.length !== 1 || t.isTryStatement(FunNode[0])){ // 函数内没有被try ... catch 包裹
+            
+            // 异常捕捉的代码
+            const code = `    
+                 console.log(error);
+            `;
+
+            //使用try、catch包裹,生成目标节点
+            const resultAst = t.tryStatement(
+              bodyNode.node,
+              t.catchClause(t.identifier("error"),
+              t.blockStatement(parser.parse(code).program.body) 
+              )
+            )
+            
+            //将转化后的节点替换原来的节点
+            bodyNode.replaceWithMultiple([resultAst]);
+           
+          }
+
+        }
+     }
+  })
+  
+  //将目标ast转化成代码
+  this.callback(null,generate(ast).code,sourceMap,meta);
+
+}
+
+module.exports = ErrorLoader;
+```
+
+大佬实现的参考代码地址：[https://github.com/kaygod/custome_loader](https://github.com/kaygod/custome_loader)
+
+大佬的文章地址、包含vue-loader、file-loader、css-loader等loader的源码解析:[https://zhuanlan.zhihu.com/p/397174187](https://zhuanlan.zhihu.com/p/397174187)
+
 ## 模块 module
 
 ## 联邦模块
@@ -91,7 +239,7 @@ Module 主要作用在 webpack 编译过程的前半段，解决原始资源"如
 
 ## 按需引入
 
-> 参考 tree-shaking优化 - 对组件库引用优化一文
+> 参考 tree-shaking优化 - 对组件库引用优化的 hash位置，就在本文
 
 ## css在一个文件和在多个文件
 
