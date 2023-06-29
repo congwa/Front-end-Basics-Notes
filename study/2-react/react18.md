@@ -34,6 +34,7 @@ TODO: 做了哪些事情
 ## use函数
 
 > [Suspense for data fetching](https://17.reactjs.org/docs/concurrent-mode-suspense.html) react17中的概念，在18中没有了但是在useSWR中有具体实现
+> [卡颂老师针对use的解释](https://mp.weixin.qq.com/s/ZXUiEFN0QCaQl-UDvXzkdQ)
 
 
 React 团队建议，同样是获取并展示数据的场景，服务端组件应该使用 [Async Component](https://github.com/reactjs/rfcs/blob/main/text/0188-server-components.md)，而客户端组件可以选用的新 Hook——[use](https://zhuanlan.zhihu.com/p/614722970)。
@@ -112,9 +113,8 @@ suspense 和 lazy 和 管道流共同实现选择性注水的结果
 
 next13在此技术上做出了server components的设计
 
-TODO: 官网的各种使用方式
+[官网的各种使用方式](https://react.dev/reference/react/Suspense#providing-a-fallback-for-server-errors-and-server-only-content)
 
-TODO: 错误上报、错误恢复、防止 Loading 闪烁等一系列功能
 
 ### 配合swr的使用 -- 不需要必须在react18，在react17也可以，其实就是类似react18 的use的语法
 > [swr](https://zhuanlan.zhihu.com/p/93824106)允许依赖于其他请求的数据，且可以确保最大程度的并行avoiding waterfalls
@@ -241,6 +241,8 @@ useDeferredValue 可以让我们延迟渲染不紧急的部分。
 
 ## useTransition() startTransition  useTransition [文档](https://react.dev/reference/react/useTransition)
 
+[文档中有大量的示例](https://react.dev/reference/react/useTransition)
+
 过渡是 React 中的一个新概念，用于区分紧急和非紧急更新。
 - 紧急更新反映了直接交互，例如键入、单击、按下等。
 - 转换更新将 UI 从一个视图转换到另一个视图。
@@ -304,4 +306,81 @@ isPending : 告诉当前是否有一些状态更新仍处于待处理状态（Re
 
 ### useTransition 和 Spusense的配合使用
 
-TODO: useTransition 和 Spusense的配合使用
+
+```js
+// api
+export const dataFetcher = ( params ) => {
+    return wrapPromise(fetchData(params))
+}
+ 
+const wrapPromise = ( promise ) => {
+    let status = "pending" ;
+    let result;
+    let suspender = promise.then(
+        r => {
+            status = "success" ;
+            result = r;
+        },
+        e => {
+            status = "error" ;
+            result = e;
+        }
+    );
+    return {
+        read() {
+            if (status === "pending" ) {
+                throw suspender;
+            } else if (status === "error" ) {
+                throw result;
+            } else if (status === "success" ) {
+                return result;
+            }
+        }
+    };
+}
+ 
+const fetchData = ( params ) => {
+    // In a real situation, use params to fetch the data required.
+    return new Promise ( resolve => {
+        setTimeout( () => {
+            resolve({
+                foo : 'bar'
+            })
+        }, 3000 );
+    });
+}
+```
+
+```jsx
+
+import React, { useState, useTransition, Suspense } from 'react' ;
+import DataDisplay from './DataDisplay' ;
+import { dataFetcher } from './api' ;
+ 
+const initialData = { read : () => { return { foo : "initial" } } };
+ 
+const Data = () => {
+    const [data, setData] = useState(initialData);
+    const [count, setCount] = useState( 0 );
+    const [startDataTransition, isDataPending] = useTransition({ timeoutMs : 2000 });
+ 
+    const fetchNewData = () => {
+        startDataTransition( () => {
+            setData(dataFetcher())
+        })
+    }
+ 
+    return (
+        < div >
+             <Suspense fallback={<p>Loading...</p>}>
+                <DataDisplay data={data} />
+                <button disabled={isDataPending} onClick={() => fetchNewData()}>Click me to begin data fetch</button>
+            </Suspense>
+            <p>Counter: {count}</p>
+            <button onClick={() => { setCount(count + 1); }}> Click me to check if the app is still responsive</button>
+        </div> 
+ 
+    )
+}
+ 
+```
