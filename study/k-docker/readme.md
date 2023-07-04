@@ -23,6 +23,25 @@ Docker 对比传统虚拟机
 | 系统支持量 | 单机支持上千个容器 | 一般几十个 |
 
 ---
+
+## docker常用的几个命令
+
+```sh
+# docker的守护进程查看
+systemctl status docker
+
+# docker 镜像查看
+docker image ls
+
+#docker 容器查看
+docker ps
+
+# Docker Registry配置和查看
+cat /etc/docker/daemon.json
+```
+
+
+---
 ## 安装
 
 这里主要介绍两种安装方式，一种是本地开发电脑 Mac 上的安装，一种是服务器 Ubuntu 上的安装
