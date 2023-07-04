@@ -69,3 +69,7 @@ timeline时间线动画分解
 5. 根据滚动距离计算当前timeline播放进度，使用timeline.seek(progress)设置当前动画进度
 
 </details>
+
+### grid mobile
+
+[grid模拟手机app图标布局](/13-grid-mobile/)
