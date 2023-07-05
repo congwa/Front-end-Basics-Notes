@@ -99,8 +99,5 @@ Successfully built a5ccd4e1b15d
 
 如果 DockerFile 中的内容没有变动，那么相应的镜像在 build 的时候会复用之前的 layer，以便提升构建效率。并且，即使文件内容有修改，那也只会重新 build 修改的 layer，其他未修改的也仍然会复用。
 
-作者：彳亍口巴
-链接：https://www.jianshu.com/p/41ab58e88489
-来源：简书
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
 
