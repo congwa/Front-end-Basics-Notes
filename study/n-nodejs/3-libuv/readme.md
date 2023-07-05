@@ -94,7 +94,10 @@ v8无论是在浏览器端还是Node.js环境下都会启用一个主线程(浏�
 
 > 重点看timers、poll、check这3个阶段就好，因为日常开发中的绝大部分异步任务都是在这3个阶段处理的。
 
-```js
+```c
+// 源码地址
+// https://github1s.com/nodejs/node/blob/HEAD/deps/uv/src/unix/core.c
+// RunCleanup函数中有个轮训调用了CleanupHandles，在CleanupHandles函数中有一个轮训，调用了uv_run
 int uv_run(uv_loop_t* loop, uv_run_mode mode) {
   int timeout;
   int r;
@@ -153,6 +156,63 @@ int uv_run(uv_loop_t* loop, uv_run_mode mode) {
     return r;
 }
 ```
+
+### timers 阶段
+
+- 一个Node.js的timer与libuv的timer阶段并不是一一对应的,若多个Node.js中的timer都到期了，则会在一个libuv的timer阶段所处理。
+- 在指定的一段时间间隔后， 计时器回调将被尽可能早地运行。但是，操作系统调度或其它正在运行的回调可能会延迟它们。
+- 此外，为了防止某个阶段任务太多，而使得后续的阶段出现饥饿的现象，会给每个阶段设置一个最大的回调数量，执行超过这个上限的回调数目之后，会自动跳出这个阶段,进入下一个阶段。
+
+### pending callbacks 阶段 (I/O Callback)
+
+此阶段对某些系统操作（如 TCP 错误类型）执行回调。
+
+例如，如果 TCP 套接字在尝试连接时接收到 ECONNREFUSED，则某些 *nix 的系统希望等待报告错误。这将被排队以在 挂起的回调 阶段执行。
+
+### idle 阶段 与 prepare 阶段
+
+只在内部执行
+
+### poll阶段
+
+poll是整个消息循环中最重要的一个阶段，作用是等待异步请求和数据，文档原话是
+
+> Acceptc 新传入连接（新套接字建立等）和 dat（文件读取等）
+
+在Node.js里，任何异步方法（除timer,close,setImmediate之外）完成时，都会将其callback加到poll queue里,并立即执行
+
+本阶段支撑了整个消息循环机制，主要做了两件事：
+
+- 处理poll队列（poll quenue）的事件(callback)
+- 执行timers的callback,当到达timers指定的时间时
+
+poll整个阶段过程为:
+
+- 如果event loop进入了 poll阶段，且代码未设定timer
+  - 如果poll queue不为空，event loop将同步的执行queue里的callback,直至queue为空，或执行的callback到达系统上限
+  - 如果poll queue为空，将会发生下面情况：
+    - 如果代码已经被setImmediate()设定了callback, event loop将结束poll阶段进入check阶段，并执行check阶段的queue (check阶段的queue是 setImmediate设定的)
+    - 如果代码没有设定setImmediate(callback)，event loop将阻塞在该阶段等待callbacks加入poll queue
+- 如果event loop进入了 poll阶段，且代码设定了timer
+  - 如果poll queue进入空状态时（即poll 阶段为空闲状态），event loop将检查timers,如果有1个或多个timers时间时间已经到达，event loop将按循环顺序进入 timers 阶段，并执行timer queue
+
+### check阶段
+
+这个阶段只处理setImmediate的回调函数
+
+因为poll phase阶段可能设置一些回调，希望在 poll  phase后运行，所以在poll phase后面增加了这个check phase
+
+### close callback 阶段 close callback 阶段
+
+专门处理一些 close类型的回调，比如socket.on('close',....)，用于清理资源。
+
+## 总结
+
+- Node.js中v8借助libuv来实现异步工作的调度，使得主线程则不阻塞
+- libuv中的poll阶段，主要封装了各平台的多路复用策略epoll/kqueue/event ports等，对I/O事件的等待和到达来驱动整个消息循环。
+- 使用Node.js时，使用者是单线程的概念。但了解其线程池规则之后，我们仍可隐式地去使用多线程的特性，只是线程的调度完全交给了Node.js的内核。
+
+![node_life](/study/imgs/node_life.png)
 
 ## 参考资料
 
