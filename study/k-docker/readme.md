@@ -641,3 +641,9 @@ docker-compose.yml
     failed to solve with frontend dockerfile.v0: failed to read dockerfile: open /var/lib/docker/tmp/buildkit-mount477390958/Dockerfile: no such file or directory
 
     一般是 Dockerfile 命名错误，注意大小写，不能是 DockerFile、dockerfile
+
+
+## 参考资料
+
+[docker使用技巧](https://mp.weixin.qq.com/s?__biz=Mzg3OTYzMDkzMg==&mid=2247496612&idx=1&sn=04c955cf8e565e9fd91d9485263b6b5b&chksm=cf033c9ff874b589a328840ee6e77582009db071b994ea2ebef6489b3936deb1caf810694fe1&scene=132#wechat_redirect)
+> alpine的使用、分层缓存的使用、多阶段构建、ARG 是构建时的参数，ENV 时运行时的变量、CMD 结合 ENTRYPOINT、COPY vs ADD
