@@ -66,6 +66,27 @@ test // <-  throw error
 onerror 主要用来捕获预料之外的错误，而 try-catch 则可以用在预知情况下监控特定错误，两种形式结合使用更加高效。
 
 
+### promise错误
+
+使用 addEventListener() 监听 unhandledrejection 事件，可以捕获到未处理的 promise 错误。‘
+
+```js
+// 监听 promise 错误 缺点是获取不到列数据
+window.addEventListener('unhandledrejection', e => {
+    lazyReportCache({
+        reason: e.reason?.stack,
+        subType: 'promise',
+        type: 'error',
+        startTime: e.timeStamp,
+        pageURL: getPageURL(),
+    })
+})
+
+```
+
+
+
+
 ## 上报
 
 监控错误拿到了报错信息，接下来则是将捕抓的错误信息发送到信息收集平台上，发送的形式主要有两种：
