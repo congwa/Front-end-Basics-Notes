@@ -688,3 +688,9 @@ optimization.innerGraph 告知 webpack 是否对未使用的导出内容，实�
   import {Button} from 'vant'
 ```
 
+
+## 参考资料
+
+[webpack热更新原理](https://zhuanlan.zhihu.com/p/539415763)
+> TODO: 由于 webpack import实现机制问题，会产生一定的副作用。如上面的写法就会导致@/views/下的 所有.vue 文件都会被打包。不管你是否被依赖引用了，会多打包一些可能永远都用不到 js 代码
+> webpack参数 --progress --watch --colors --profile 构建进度 实时监测 编译过程中的步骤耗时时间
