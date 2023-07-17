@@ -6,7 +6,7 @@
 - transfroming(转化)
 - 生成(生成)
 
-[参考图](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3721be091bd6413495b486e917b2e9bb~tplv-k3u1fbpfcp-zoom-in-crop-mark:4536:0:0:0.awebp)
+![参考图](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3721be091bd6413495b486e917b2e9bb~tplv-k3u1fbpfcp-zoom-in-crop-mark:4536:0:0:0.awebp)
 
 ## babel 转义分类
 
@@ -74,7 +74,6 @@ Babel presets 可以充当可共享的 Babel 插件和/或配置集 options
 
 <details> 
         <summary>stage 阶段</summary>
-        正在为您搜索：stage 阶段、babel
 
 在 Babel 中， stage 阶段指的是 ECMAScript 的提案阶段。TC39 是一个由 JavaScript 社区组成的技术委员会，负责 JavaScript 语言标准的发展。他们将不同阶段的 ECMAScript 提案分为以下四个 stage（阶段）：
 
