@@ -325,3 +325,49 @@ cleanupDeps() {
     this.newDeps.length = 0
   }
 ```
+
+
+## vuex中的computed中使用setter getter的例子 或者说 v-model在computed使用的例子 - 双向绑定的计算属性
+
+[双向绑定的计算属性](https://v3.vuex.vuejs.org/zh/guide/forms.html#%E5%8F%8C%E5%90%91%E7%BB%91%E5%AE%9A%E7%9A%84%E8%AE%A1%E7%AE%97%E5%B1%9E%E6%80%A7)
+
+必须承认，这样做比简单地使用“v-model + 局部状态”要啰嗦得多，并且也损失了一些 v-model 中很有用的特性。另一个方法是使用带有 setter 的双向绑定计算属性：
+
+```html
+<input v-model="message">
+```
+
+```js
+// ...
+computed: {
+  message: {
+    get () {
+      return this.$store.state.obj.message
+    },
+    set (value) {
+      this.$store.commit('updateMessage', value)
+    }
+  }
+}
+```
+
+## 使用vuex觉得繁重，只是全局state的目的
+
+1. 可以使用new Vue实例的方式对date等属性在vue的主流程中对变量进行响应式注册
+2. 可以使用[Vue.observable( object ) api](https://v2.cn.vuejs.org/v2/api/#Vue-observable)
+
+注意: 在vue2中可能响应式变量没办法向vue3那样灵活注入组件进行使用，通常在vue2中返回的响应式变量(对象)可以直接用于**渲染函数**和**计算属性内**，并且会在发生变更时候触发响应的的更新。 也可以作为**最小化的跨组件状态存储器**，用于简单的场景。
+
+```js
+// 最小化的跨组件状态存储器
+const state = Vue.observable({ count: 0 })
+
+// state已经是被响应式收集了，这里统一称作响应式变量，也可以直接用于h函数(h函数相当于渲染函数，会被依赖收集)
+const Demo = {
+  render(h) {
+    return h('button', {
+      on: { click: () => { state.count++ }}
+    }, `count is: ${state.count}`)
+  }
+}
+```
