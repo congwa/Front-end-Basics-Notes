@@ -371,3 +371,25 @@ const Demo = {
   }
 }
 ```
+
+---
+## `$nextTick()` 返回一个 Promise 对象
+
+`$nextTick()` 返回一个 Promise 对象，所以你可以使用新的 `ES2017 async/await` 语法完成相同的事情
+
+```js
+// 这里非常有意思的是，`$nextTick()` 返回一个 Promise 对象，所以你可以使用新的 `ES2017 async/await` 语法完成相同的事情
+methods: {
+  updateMessage: async function () {
+    this.message = '已更新'
+    console.log(this.$el.textContent) // => '未更新'
+    await this.$nextTick()
+    console.log(this.$el.textContent) // => '已更新'
+  }
+}
+
+// 与上面的结果相同
+this.$nextTick(function () {
+  console.log(this.$el.textContent) // => '已更新'
+})
+```
