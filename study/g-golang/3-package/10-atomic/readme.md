@@ -29,8 +29,6 @@ CMPXCHG指令的思想基于CAS
 
 [名词 - cas](/study/h-后端/名词.md)
 
-## TODO: GO - atomic go的原子操作
-
 - Increase() ：原子性的自增
 - Decrease() ：原子性的自减
 - Add(x) ：原子性的对某个数字增加X
