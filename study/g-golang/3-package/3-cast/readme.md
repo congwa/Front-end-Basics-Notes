@@ -69,3 +69,49 @@ cast实现了多种常见类型之间的相互转换,返回最符合直觉的结
 - 如果是map[interface{}]interface{}，将每个键和值都转为string存入新的 map，最后返回新的 map；
 - 如果是string类型，cast将它看成一个 JSON 串，解析这个 JSON 到map[string]string，然后返回结果；
 - 其他情况，返回错误。
+
+
+## 示例
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/spf13/cast"
+)
+
+func main() {
+	// 基础转换示例
+	fmt.Println("Basic Conversions:")
+	fmt.Println(cast.ToString(nil))           // 输出: ""
+	fmt.Println(cast.ToString(true))          // 输出: "true"
+	fmt.Println(cast.ToInt(true))             // 输出: 1
+	fmt.Println(cast.ToString(123))           // 输出: "123"
+	fmt.Println(cast.ToBool("true"))          // 输出: true
+
+	// 时间和时长转换示例
+	fmt.Println("\nTime and Duration Conversions:")
+	t := time.Now()
+	fmt.Println(cast.ToTime(t))               // 输出: 当前时间
+	fmt.Println(cast.ToTime(t.Unix()))        // 输出: 当前时间
+	fmt.Println(cast.ToTime("2023-01-01"))    // 输出: 2023-01-01 00:00:00 +0000 UTC
+	fmt.Println(cast.ToDuration(10))          // 输出: 10ns
+	fmt.Println(cast.ToDuration("2s"))        // 输出: 2s
+
+	// 切片转换示例
+	fmt.Println("\nSlice Conversions:")
+	fmt.Println(cast.ToIntSlice([]int{1, 2, 3}))               // 输出: [1 2 3]
+	fmt.Println(cast.ToStringSlice([]interface{}{1, "2", true})) // 输出: [1 2 true]
+
+	// map转换示例
+	fmt.Println("\nMap Conversions:")
+	fmt.Println(cast.ToStringMapString(map[string]string{"name": "John", "age": "25"}))                           // 输出: map[name:John age:25]
+	fmt.Println(cast.ToStringMapString(map[string]interface{}{"name": "John", "age": 25}))                        // 输出: map[name:John age:25]
+	fmt.Println(cast.ToStringMapString(map[interface{}]string{"name": "John", "age": "25"}))                      // 输出: map[name:John age:25]
+	fmt.Println(cast.ToStringMapString(map[interface{}]interface{}{"name": "John", "age": 25})))                 // 输出: map[name:John age:25]
+	fmt.Println(cast.ToStringMapString(`{"name": "John", "age": "25"}`))                                         // 输出: map[name:John age:25]
+}
+```
