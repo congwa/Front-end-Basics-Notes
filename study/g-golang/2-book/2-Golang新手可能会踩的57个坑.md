@@ -1056,6 +1056,8 @@ func main() {
 
 针对上边有 bug 的这个例子，可使用一个废弃 channel `done` 来告诉剩余的 goroutine 无需再向 ch 发送数据。此时 `<- done` 的结果是 `{}`：
 
+> 从一个已经关闭的 channel 接收数据，如果缓冲区中为空，则返回一个零值  -- 引自刘丹冰ace的《Golang修养之路》[channel章节](https://www.kancloud.cn/aceld/golang/1958317)
+
 ```go
 func main() {
     ch := make(chan int)
