@@ -40,3 +40,4 @@ Entity-Relationship，有三个组成部分：实体、属性、联系。
 
 [er图参考资料](https://zhuanlan.zhihu.com/p/487981339)
 [简化的er图参考资料](https://baijiahao.baidu.com/s?id=1751607876987036420&wfr=spider&for=pc)
+[er图](https://www.bilibili.com/read/cv7592007)
