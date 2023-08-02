@@ -225,7 +225,9 @@ drop index i_name_major_class on t_student;
 1. 在经常需要搜索的列上建立索引，可以加快查询的速度
 2. 在主键列上主键索引，可以确保此列数据的唯一性
 3. 如果你对st_name字段建立了一个索引，当查询时候的语句是 `select * from t_student where st_name like '%123%'` 或 `like '%123'`,那么这个索引将不会起到作用，而`st_name like '123%'`才可以用到索引
-4. 不要在列上进行运算，这样会使mysql索引失效，也会进行全表扫描
+4. 不要在列上进行运算，这样会使mysql索引失效，也会进行全表扫描 
+
+    此项也叫 列独立- 只有参与条件表达式的字段独立在关系运算符的一侧，该字段才可能使用到索引。“独立的列”是指索引列不能是表达式的一部分，也不能是函数的参数。
    
     ```sql
     # 当使用字符串拼接操作符时，数据库需要将每个记录的 st_name 字段值与 '001' 进行拼接，然后再与 'John001' 进行比较。这会导致每个记录都进行计算，而无法充分利用索引。
@@ -233,6 +235,9 @@ drop index i_name_major_class on t_student;
 
     # 这样就可以利用索引了
     SELECT * FROM t_student WHERE st_name = 'John';
+
+    select * from  表 where age + 10 = 30;			//age 参与了计算,不是独立的一列
+    select * from  表 where age= 30 - 10;		//age 是独立的一列
     ```
     
 5. or运算都具有索引 - 如果出现OR(或者)运算，要求所有参与运算的字段都存在索引，才会使用到索引。
