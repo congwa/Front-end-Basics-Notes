@@ -1,0 +1,16 @@
+version: '1.0'
+services:
+  openresty-demo1:
+    image: openresty:demo1
+    restart: always
+    ports:
+      - 9090:80
+    expose:
+      - 9090
+  openresty-demo2:
+    image: openresty:demo1
+    restart: always
+    ports:
+      - 9091:80
+    expose:
+      - 9091

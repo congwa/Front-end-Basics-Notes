@@ -2,6 +2,123 @@
 
 Docker是一个用于开发、发布和运行应用程序的开放平台。也可以简单的理解为 Docker 是一个可以部署、运行项目的容器。
 
+## 命令
+
+```Dockerfile
+
+FROM          # 基础镜像
+MAINTAINER    # 镜像作者信息 姓名+邮箱
+RUN           # 镜像构建的时候运行的命令
+ADD           # copy内容到容器（压缩包，自动解压）
+COPY          # 类似ADD 将文件copy到容器中
+WORKDIR       # 指定镜像工作目录
+VOLUME        # 设置容器卷
+EXPOSE        # 指定暴露端口
+ONBUILD       # 当构一个被继承的容器 dockerfile这个时候会运行ONBUILD 的指令 ，触发指定。
+ENV           # 构建时设置环境变量
+ENTRYPOINT    # 指定这个容器启动的时候要运行的命令（可以追加命令）
+CMD           # 指定这个容器启动的时候要运行的命令（只有最后一个会生效，可被代替）
+LABEL         # 指令用来给镜像添加一些元数据
+HEALTHCHECK   # 用于指定某个程序或者指令来监控 docker 容器服务的运行状态
+ARG           # ARG设置环境变量仅对 Dockerfile 内有效
+
+```
+
+```sh
+docker  build -t 镜像名称:版本  -f Dockefile文件  .
+# -t  指定镜像名字:版本
+# -f  指定Dockerfile文件   
+# .  代表在当前目录下
+```
+
+```sh
+docker run --name nginx-test2 -p 80:80 -v /tmp/aaa:/usr/share/nginx/html -e KEY1=VALUE1 -d nginx:latest 
+
+# -p 是端口映射
+# -v 是指定数据卷挂载目录
+# -e 是指定环境变量
+# -d 是后台运行
+```
+
+```sh
+docker cp ...
+```
+
+```sh
+# docker-compose
+
+# 该参数指定Dockerfile文件的路径，Docker Compose会通过Dockerfile构建并生成镜像，然后使用该镜像
+build
+
+# 指定启动容器的镜像，可以是镜像仓库/标签或者镜像id(或者id的前一部分)
+#  　如果镜像不存在，Compose将尝试从官方镜像仓库将其pull下来，如果你还指定了build，在这种情况下，它将使用指定的build选项构建它，并使用image指定的名字和标记对其进行标记
+image
+
+# 指定一个自定义容器名称，而不是生成的默认名称
+# 由于Docker容器名称必须是唯一的，因此如果指定了自定义名称，则无法将服务扩展到多个容器
+container_name
+
+# 卷挂载路径设置。可以设置宿主机路径 (HOST:CONTAINER) 或加上访问模式 (HOST:CONTAINER:ro),挂载数据卷的默认权限是读写(rw)，可以通过ro指定为只读
+volumes
+
+# 暴露端口，但不映射到宿主机，只被连接的服务访问仅可以指定内部端口为参数
+expose
+
+# 暴露端口信息常用的简单格式：使用宿主：容器 (HOST:CONTAINER)格式或者仅仅指定容器的端口(宿主将会随机选择端口)都可以
+ports
+
+# 重启策略
+restart
+
+# environment
+
+environment
+
+
+# link关键字用于在不同的容器之间创建网络链接， 它允许一个容器能够访问另一个容器的网络连接信息（如IP地址和端口）。
+links
+
+# web容器与db容器建立了链接，使得web容器可以通过db主机名访问到db容器。
+# services:
+#   web:
+#     build: .
+#     links:
+#       - db
+#   db:
+#     image: postgres
+
+
+# 新版本中建议使用 自定义网络 来代替 links
+# services:
+#   web:
+#     build: .
+#     depends_on:
+#       - db
+#     networks:
+#       - mynet
+#   db:
+#     image: postgres
+#     networks:
+#       - mynet
+
+# networks:
+#   mynet:
+#     driver: bridge
+
+
+# depends_on关键字用于定义服务之间的依赖关系， 影响启动顺序
+depends_on
+
+# web服务依赖于db服务， 当使用docker-compose up启动时，Docker Compose会首先启动db容器，然后再启动web容器
+# services:
+#   web:
+#     build: .
+#     depends_on:
+#       - db
+#   db:
+#     image: postgres
+```
+
 ## 容器、操作系统级虚拟化
 
 Docker 是基于 Linux 的高效、敏捷、轻量级的容器（轻量虚拟）方案。它的特点：高效的利用系统资源、快速的启动时间、一致的运行环境、持续交付和部署、更轻松的迁移。
