@@ -55,10 +55,9 @@ gpu内存包括：
 
 ## 参考
 
-[淘宝webview优化（提高淘宝应用的性能和用户体验）](淘宝webview优化（提高淘宝应用的性能和用户体验）)
-[深入探讨如何从测试的角度对Webview进行压测并精准地分析Webview的内存情况](https://blog.csdn.net/breeze210/article/details/122470443)
-[WebGL与Canvas的显存与内存使用分析](https://it.cha138.com/python/show-5047448.html)
-[史上最全的WKWebView问题优化指南](https://zhuanlan.zhihu.com/p/58681116?from_voters_page=true)
-[CSS频繁绘图中transform导致的内存占用问题](https://www.cnblogs.com/abestxun/p/16303623.html)
-
-[WebView 常见 Crash 分析及解决方案](https://weibo.com/ttarticle/p/show?id=2309404736343732519322)
+- [淘宝webview优化（提高淘宝应用的性能和用户体验）](淘宝webview优化（提高淘宝应用的性能和用户体验）)
+- [深入探讨如何从测试的角度对Webview进行压测并精准地分析Webview的内存情况](https://blog.csdn.net/breeze210/article/details/122470443)
+- [WebGL与Canvas的显存与内存使用分析](https://it.cha138.com/python/show-5047448.html)
+- [史上最全的WKWebView问题优化指南](https://zhuanlan.zhihu.com/p/58681116?from_voters_page=true)
+- [CSS频繁绘图中transform导致的内存占用问题](https://www.cnblogs.com/abestxun/p/16303623.html)
+- [WebView 常见 Crash 分析及解决方案](https://weibo.com/ttarticle/p/show?id=2309404736343732519322)
