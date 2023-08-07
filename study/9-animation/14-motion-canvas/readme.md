@@ -34,65 +34,63 @@ motion-canvas和eva.js pixiJS cocosJS这种互动引擎的对比
 ## 疑问
 
 1. 为什么可以支持jsx
-
   @motion-canvas/2d部分巧妙的利用了typescript4.1引入的jsxImportSource选项(此功能专门给react17支持的，在这里巧妙了运用了这个特性),jsxImportSource指向本库自己自定义的jsx-runtime那么编译器编译后就引入自己库的jsx来解析
 
-  ```js
-  /**
-   {
-      "compilerOptions": {
-        "target": "esnext",
-        "module": "commonjs",
-        "jsx": "react-jsx",
+    ```js
+    /**
+     {
+        "compilerOptions": {
+          "target": "esnext",
+          "module": "commonjs",
+          "jsx": "react-jsx",
+        }
       }
+    */
+    "use strict";
+    var __importDefault = (this && this.__importDefault) || function (mod) {
+        return (mod && mod.__esModule) ? mod : { "default": mod };
+    };
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const jsx_runtime_1 = require("react/jsx-runtime");
+    const react_1 = __importDefault(require("react"));
+    function App() {
+        return (0, jsx_runtime_1.jsx)("h1", { children: "Hello World" });
     }
-   */
-  "use strict";
-  var __importDefault = (this && this.__importDefault) || function (mod) {
-      return (mod && mod.__esModule) ? mod : { "default": mod };
-  };
-  Object.defineProperty(exports, "__esModule", { value: true });
-  const jsx_runtime_1 = require("react/jsx-runtime");
-  const react_1 = __importDefault(require("react"));
-  function App() {
-      return (0, jsx_runtime_1.jsx)("h1", { children: "Hello World" });
-  }
 
-  /**
-   * 
-    {
-      "compilerOptions": {
-        "target": "esnext",
-        "module": "es2020",
-        "jsx": "react-jsx",
-        "jsxImportSource": "@motion-canvas/2d/lib", // 将添加 @motion-canvas/2d/lib/jsx-runtime 作为 _jsx 工厂的导入。
-        "skipLibCheck": true,
-        "paths": {
-          "@motion-canvas/2d/lib/jsx-runtime": ["jsx-runtime.ts"]
-        },
+    /**
+     * 
+      {
+        "compilerOptions": {
+          "target": "esnext",
+          "module": "es2020",
+          "jsx": "react-jsx",
+          "jsxImportSource": "@motion-canvas/2d/lib", // 将添加 @motion-canvas/2d/lib/jsx-runtime 作为 _jsx 工厂的导入。
+          "skipLibCheck": true,
+          "paths": {
+            "@motion-canvas/2d/lib/jsx-runtime": ["jsx-runtime.ts"]
+          },
+        }
       }
+    */
+
+    "use strict";
+    var __importDefault = (this && this.__importDefault) || function (mod) {
+        return (mod && mod.__esModule) ? mod : { "default": mod };
+    };
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const jsx_runtime_1 = require("@motion-canvas/2d/lib/jsx-runtime");
+    function App() {
+        return (0, jsx_runtime_1.jsx)("h1", { children: "Hello World" });
     }
-   */
 
-  "use strict";
-  var __importDefault = (this && this.__importDefault) || function (mod) {
-      return (mod && mod.__esModule) ? mod : { "default": mod };
-  };
-  Object.defineProperty(exports, "__esModule", { value: true });
-  const jsx_runtime_1 = require("@motion-canvas/2d/lib/jsx-runtime");
-  function App() {
-      return (0, jsx_runtime_1.jsx)("h1", { children: "Hello World" });
-  }
+    ```
 
+    [es-build jsx支持](https://github1s.com/motion-canvas/motion-canvas/blob/HEAD/packages/vite-plugin/src/main.ts#L467), 在vite-plugin中对jsx进行了天然的支持配置，使用了vite内置的esbuild进行编译
 
-  ```
+    在@motion-canvas/create包中，ts选项直接使用ts的编译jsx选项。 js选项，那么必然会自动导入@motion-canvas/vite-plugin包，在vite-plugin包中自定义config使用esbuild的jsxImportSource选项
 
+    参考资料
 
-  [es-build jsx支持](https://github1s.com/motion-canvas/motion-canvas/blob/HEAD/packages/vite-plugin/src/main.ts#L467), 在vite-plugin中对jsx进行了天然的支持配置，使用了vite内置的esbuild进行编译
-
-  在@motion-canvas/create包中，ts选项直接使用ts的编译jsx选项。 js选项，那么必然会自动导入@motion-canvas/vite-plugin包，在vite-plugin包中自定义config使用esbuild的jsxImportSource选项
-
-  参考资料
     - [esbuild - jsxImportSource](https://esbuild.github.io/api/#jsx-import-source)
     - [typescript - jsxImportSource](https://www.typescriptlang.org/tsconfig#jsxImportSource) **@motion-canvas/2d中使用的此选项**
     - [奇技淫巧：通过 jsx-runtime 实现自动使用 classnames / clsx](https://zhuanlan.zhihu.com/p/420248803)
