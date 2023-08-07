@@ -34,9 +34,74 @@ motion-canvas和eva.js pixiJS cocosJS这种互动引擎的对比
 ## 疑问
 
 1. 为什么可以支持jsx
+
+  @motion-canvas/2d部分巧妙的利用了typescript4.1引入的jsxImportSource选项(此功能专门给react17支持的，在这里巧妙了运用了这个特性),jsxImportSource指向本库自己自定义的jsx-runtime那么编译器编译后就引入自己库的jsx来解析
+
+  ```js
+  /**
+   {
+      "compilerOptions": {
+        "target": "esnext",
+        "module": "commonjs",
+        "jsx": "react-jsx",
+      }
+    }
+   */
+  "use strict";
+  var __importDefault = (this && this.__importDefault) || function (mod) {
+      return (mod && mod.__esModule) ? mod : { "default": mod };
+  };
+  Object.defineProperty(exports, "__esModule", { value: true });
+  const jsx_runtime_1 = require("react/jsx-runtime");
+  const react_1 = __importDefault(require("react"));
+  function App() {
+      return (0, jsx_runtime_1.jsx)("h1", { children: "Hello World" });
+  }
+
+  /**
+   * 
+    {
+      "compilerOptions": {
+        "target": "esnext",
+        "module": "es2020",
+        "jsx": "react-jsx",
+        "jsxImportSource": "@motion-canvas/2d/lib", // 将添加 @motion-canvas/2d/lib/jsx-runtime 作为 _jsx 工厂的导入。
+        "skipLibCheck": true,
+        "paths": {
+          "@motion-canvas/2d/lib/jsx-runtime": ["jsx-runtime.ts"]
+        },
+      }
+    }
+   */
+
+  "use strict";
+  var __importDefault = (this && this.__importDefault) || function (mod) {
+      return (mod && mod.__esModule) ? mod : { "default": mod };
+  };
+  Object.defineProperty(exports, "__esModule", { value: true });
+  const jsx_runtime_1 = require("@motion-canvas/2d/lib/jsx-runtime");
+  function App() {
+      return (0, jsx_runtime_1.jsx)("h1", { children: "Hello World" });
+  }
+
+
+  ```
+
+
   [es-build jsx支持](https://github1s.com/motion-canvas/motion-canvas/blob/HEAD/packages/vite-plugin/src/main.ts#L467), 在vite-plugin中对jsx进行了天然的支持配置，使用了vite内置的esbuild进行编译
 
-2. stage和player之间的关系
+  在@motion-canvas/create包中，ts选项直接使用ts的编译jsx选项。 js选项，那么必然会自动导入@motion-canvas/vite-plugin包，在vite-plugin包中自定义config使用esbuild的jsxImportSource选项
+
+  参考资料
+    - [esbuild - jsxImportSource](https://esbuild.github.io/api/#jsx-import-source)
+    - [typescript - jsxImportSource](https://www.typescriptlang.org/tsconfig#jsxImportSource) **@motion-canvas/2d中使用的此选项**
+    - [奇技淫巧：通过 jsx-runtime 实现自动使用 classnames / clsx](https://zhuanlan.zhihu.com/p/420248803)
+    - [babel- importSource](https://babeljs.io/docs/babel-preset-react#importsource)
+    - [react新版本jsx解析，不再转换成React.createElement](https://zh-hans.legacy.reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html)
+    - [React 17 JSX 工厂- TypeScript 4.1 通过 jsx 编译器选项的两个新选项支持 React 17 即将推出的 jsx 和 jsxs 工厂函数](https://devblogs.microsoft.com/typescript/announcing-typescript-4-1/#jsx-factories)
+    - [createlement-rfc/text/0000-create-element-changes](https://github.com/reactjs/rfcs/blob/createlement-rfc/text/0000-create-element-changes.md#detailed-design)
+
+1. stage和player之间的关系
 
   stage和player同时都能设置config[配置](https://github1s.com/motion-canvas/motion-canvas/blob/HEAD/packages/player/src/main.ts#L256),player要渲染在stage上面，[stage.render(player)](https://github1s.com/motion-canvas/motion-canvas/blob/HEAD/packages/player/src/main.ts#L244)
 
