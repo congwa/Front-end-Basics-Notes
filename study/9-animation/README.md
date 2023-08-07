@@ -73,3 +73,14 @@ timeline时间线动画分解
 ### grid mobile
 
 [grid模拟手机app图标布局](/13-grid-mobile/)
+
+
+### 14. motion-canvas
+
+专注于绘制演示(播放)动画的canvas库，[在这里对其实现方式的源码进行分析、解析](./14-motion-canvas/)
+
+- jsx渲染类(由canvas元素生成的类)的节点(非常新颖的方式)
+- 复杂event时间事件，提供一个编辑器来代替代码书写的复杂性
+- 提供timeline的flow的动画输入方式
+- 导出视频、序列帧动画
+- 内置多种动画效果，书写代码量少和理解简单的特点
