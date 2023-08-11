@@ -248,3 +248,28 @@ function fromRefs<T extends object>(obj: { [K in keyof T]: ValueType | Ref<Value
 }
 
 ```
+
+
+## props透传原理
+
+创建proxy对象去获取Props
+
+因为我们知道代码中我们可以通过this. 的方式去获取props的值，而且props已经被挂载到了组件实例对象中。
+
+因此创建一个proxy对象（后续通过bind的方式将这个对象挂载到render函数等位置，this.的时候由props去映射到对应的props中）
+
+```js
+instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
+const PublicInstanceProxyHandlers = {
+    get({ _: instance }, key) {
+        const { setupState, props } = instance
+        // 如果在传入的props中，则返回的对应的值 （props）
+        if (hasOwn(props, key)) {
+            return props[key]
+        }
+    }
+}
+```
+
+
+
