@@ -68,3 +68,37 @@ select name from student group by name having count(name) > 1;
 select * from student name in (select name from student group by name having count(name) > 1);
 
 ```
+
+
+## group by 同时对多个字段分组
+
+```sql
+Table: Order
+ 
+Product   Buyer       Spending
+---------------------------------
+PD001     Todd          12.00
+PD001     Todd          12.00
+PD001     Todd          12.00
+PD001     Lily          12.00
+PD001     Lily          12.00
+PD002     Todd          20.00
+PD002     Todd          20.00
+```
+
+```sql
+SELECT Product，Buyer, SUM(Spending)
+FROM `Order`
+GROUP BY Product, Buyer
+```
+
+```sql
+Product    Buyer     SUM
+------------------------------
+PD001      Todd      36.00
+PD001      Lily      24.00
+PD002      Todd      40.00
+```
+
+GROUP BY X, Y意思是将所有具有相同X字段值和Y字段值的记录放到一个分组里。
+
