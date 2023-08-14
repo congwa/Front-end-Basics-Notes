@@ -52,7 +52,7 @@ async setup() {
             get(target, key, receiver) {
                 // 收集依赖
                 track(target, key)
-                const result = Relect.get(target, key, receiver)
+                const result = Reflect.get(target, key, receiver)
                 return covert(result)
             },
 
