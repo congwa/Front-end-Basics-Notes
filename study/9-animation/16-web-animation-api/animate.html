@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>animation-api</title>
+  </head>
+  <body>
+    <div class="danmu">
+      <div class="danmu-content" style="width: 200px; height: 20px; background-color: red; color: white;"> hello world</div>
+    </div>
+  </body>
+  <script type="module">
+    async function startAnimate() {
+      const stageWidth = 1000;
+      const DANMU_WITH = 500;
+      const danmuEl = document.querySelector(".danmu")
+      // 滑入
+      const totalWidth = stageWidth + DANMU_WITH;
+      const centerX = stageWidth * 0.5 - DANMU_WITH * 0.5;
+      const kfsIn = {
+        transform: [`translateX(${totalWidth}px)`, `translateX(${centerX}px)`],
+      };
+      await danmuEl.animate(kfsIn, {
+        duration: 2000,
+        fill: "forwards",
+        easing: "ease-out",
+      }).finished;
+
+      // 暂停部分
+      const contentEl = danmuEl.querySelector(".danmu-content");
+      const itemWidth = contentEl.getBoundingClientRect().width;
+      const gapWidth = Math.max(0, itemWidth - DANMU_WITH);
+      const duration = Math.max(0, Math.floor(gapWidth / 200) * 1000);
+
+      const translateX = duration > 0 ? gapWidth : 0;
+      const kfsTxt = {
+        transform: [`translateX(0px)`, `translateX(-${gapWidth}px)`],
+      };
+      await contentEl.animate(kfsTxt, {
+        duration,
+        delay: 2000,
+        fill: "forwards",
+        easing: "linear",
+      }).finished;
+
+      // 滑出
+      const kfsOut = {
+        transform: [`translateX(${centerX}px)`, `translateX(-${DANMU_WITH}px)`],
+      };
+      await danmuEl.animate(kfsOut, {
+        duration: 2000,
+        fill: "forwards",
+        easing: "ease-in",
+      }).finished;
+
+      if (danmuEl) {
+        danmuEl.removeChild(contentEl);
+      }
+      // isAnimating = false;
+    }
+    
+    const playAnimation = async () => {
+      await startAnimate();
+      // 动画执行完body的背景变成蓝色
+      document.body.style.background = 'blue';
+    }
+    playAnimation()
+  </script>
+</html>

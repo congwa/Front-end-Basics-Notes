@@ -84,3 +84,26 @@ timeline时间线动画分解
 - 提供timeline的flow的动画输入方式
 - 导出视频、序列帧动画
 - 内置多种动画效果，书写代码量少和理解简单的特点
+
+### 15. display-animation
+
+通过控制 display:none/block控制动画执行
+
+我这里[写了一篇详细的文章来介绍这种方式](https://github.com/congwa/Front-end-Basics-Notes/blob/main/study/8-css%E5%92%8C%E6%96%B0%E5%9E%8B%E6%9E%84%E5%BB%BA%E6%8A%80%E6%9C%AF/display%3Anone%E4%B8%8Ecss%E5%8A%A8%E7%94%BB%E7%9A%84%E5%88%86%E6%9E%90.md)
+
+我这里同样[实现了简单的示例](./15-display-animation/index.html)
+
+结合vue中的`transition`动画的原理再，合并`FLIP`动画技术，提出的动画实现方案
+
+### 16. web-animation-api 有人简称 WAAPI
+
+与纯粹的声明式CSS不同，JavaScript还允许我们动态地将属性值设置为持续时间。 对于构建自定义动画库和创建交互式动画，Web动画API可能是完成工作的完美工具。
+
+web Animations API 和 css动画，不是谁替换谁。结合使用，效果更佳。
+
+复杂的逻辑动画，因为web Animations API和JS天然的亲和力，是更优的选择。
+
+如果不行， 加个垫片 [web-animations-js](https://github.com/web-animations/web-animations-js)
+
+[在这里对其实现方式的源码进行分析、解析](./16-web-animation-api/)
+[在这里对使用的用法进行总结]()
