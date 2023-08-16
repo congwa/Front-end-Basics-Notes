@@ -106,4 +106,4 @@ web Animations API 和 css动画，不是谁替换谁。结合使用，效果更
 如果不行， 加个垫片 [web-animations-js](https://github.com/web-animations/web-animations-js)
 
 [在这里对其实现方式的源码进行分析、解析](./16-web-animation-api/)
-[在这里对使用的用法进行总结]()
+[在这里对使用的用法进行总结](https://github.com/congwa/Front-end-Basics-Notes/blob/main/study/8-css%E5%92%8C%E6%96%B0%E5%9E%8B%E6%9E%84%E5%BB%BA%E6%8A%80%E6%9C%AF/web-animation-api.md)
