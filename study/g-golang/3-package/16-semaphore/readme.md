@@ -1,4 +1,4 @@
-# go中的信号量
+# Semaphore go中的信号量
 
 ![pv](/study/imgs/go-pv.webp)
 
