@@ -565,6 +565,37 @@ bool    false
 string  ""
 ```
 
+```go
+// nil 是一个预定义的标识符，用于表示指针、切片、映射、接口、通道和函数类型的零值或空值。
+var ptr *int = nil
+var s []int = nil
+var m map[string]int = nil
+var i interface{} = nil
+var ch chan int = nil
+var f func() = nil
+```
+
+```go
+type MyStruct struct {
+    FuncSlice []func()
+}
+
+// 使用 make 函数创建了一个长度为 0 的空切片并分配给 FuncSlice 字段
+myStruct := MyStruct{
+    FuncSlice: make([]func(), 0),
+}
+
+// 省略 make 函数并使用空的切片字面量来初始化
+myStruct := MyStruct{
+    FuncSlice: []func(){},
+}
+
+// FuncSlice 切片字段初始化为 nil, 当切片被初始化为 nil 时，它是一个空切片，表示其中没有任何元素
+myStruct := MyStruct{
+    FuncSlice: nil,
+}
+```
+
 ## 流程控制
 
 Go中流程控制分三大类：条件判断，循环控制和无条件跳转。
