@@ -259,6 +259,7 @@ function fromRefs<T extends object>(obj: { [K in keyof T]: ValueType | Ref<Value
 因此创建一个proxy对象（后续通过bind的方式将这个对象挂载到render函数等位置，this.的时候由props去映射到对应的props中）
 
 ```js
+// 这种说法是错误的，破坏了vue的单向数据流
 instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
 const PublicInstanceProxyHandlers = {
     get({ _: instance }, key) {
@@ -270,6 +271,99 @@ const PublicInstanceProxyHandlers = {
     }
 }
 ```
+
+正确是说法在《vue3设计与实现》给出了如下的解释
+
+```js
+function mountComponent(vnode, container, anchor){
+	const componentOptions = vnode.type
+	// 从组建选项对象中取出props定义，即propsOption
+	const {render, data, props: propsOption /* 其他省略 */ } = componentOptions
+	
+	beforeCreate && beforeCreate()
+	const state = reactive(data())
+	// 调用resolveProps函数解析出最终的props数据与attrs数据
+	const [props, attrs] = resolveProps(propsOption, vnode.props)
+	const instance = {
+		state,
+		// 将解析出的props数据包装为shallowReactive并定义到组件实例上
+		props: shallowReactive(props),
+		isMounted: false,
+		subTree: null
+	}
+	vnode.component = instance
+
+	// 省略部分代码
+	
+}
+
+// resolveProps 函数用于解析组件props和attrs数据
+function resolveProps(options, propsData){
+	const props = {}
+	const attrs = {}
+	// 遍历为组件传递的props数据
+	for (const key in propsData){
+		if(key in options){
+			// 如果为组件传递的props数据在组件自身的props选项中有定义，则将其视为合法的props
+			props[key] = propsData[key]
+		}else{
+			// 否则将其作为attrs
+			attrs[key] = propsData[key]
+		}
+	}
+	
+	return [props,attrs]
+
+}
+```
+
+但是可能会有一个疑问就是，父组件传值的话，虽然没有破坏单向数据流，但是子组件是如何知道更新的？
+
+在patchComponent中我们可以看到如下代码
+
+1. 在path的过程中，会检测子组件是否真的需要更新，因为子组件的props可能不变
+2. 如果需要更新，则更新子组件的props,slots等内容
+
+```js
+function patchComponent(n1,n2,anchor){
+	// 获取组件实例，即n1.component,同时让新的组件虚拟节点 n2.component也指向组件实例
+	// 将组件实例添加到新的组件vnode对象上，即n2.component = n1.component
+	const instance = (n2.component = n1.component) 
+	// 获取当前的props数据
+	const {props} = instance
+	// 调用hasPropsChanged检测为子组件传递的props是否发生变化，如果没有变化，则不需要更新
+	if(hasPropsChanged(n1.props, n2.props)){
+		// 调用 resolveProps函数重新获取props数据
+		const {nextProps} = resolveProps(n2.type.props, n2.props)
+		// 更新props
+		for(const k in nextProps){
+			props[k] = nextProps[k]
+		}
+		// 删除不存在的props
+		for(const k in props){
+			if(!(k in nextProps)) delete props[k]
+		}
+	}
+}
+
+function hasPropsChanged(prevProps,nextProps){
+	const nextKeys = Object.keys(nextProps)
+	// 如果旧props的数量变了，则说明有变化
+	if(nextKeys.length !== Object.keys(prevProps).length){
+		return true
+	}
+	for(let i=0;i<nextKeys.length;i++){
+		const key = nextKeys[i]
+		// 有不相等的props, 则说明有变化
+		if(nextProps[key] !== prevProps[key]) return true
+	}
+	return false
+
+}
+
+```
+
+由此可见，vue2和vue3在透传props方面差距是不大的。
 
 
 
