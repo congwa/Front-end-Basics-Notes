@@ -116,4 +116,5 @@ nginx服务器默认值情况
 
 ## 参考地址
 
-[Nginx一网打尽：动静分离、压缩、缓存、黑白名单、跨域、高可用、性能优化...想要的这都有](https://juejin.cn/post/7112826654291918855#heading-15)
+- [Nginx一网打尽：动静分离、压缩、缓存、黑白名单、跨域、高可用、性能优化...想要的这都有](https://juejin.cn/post/7112826654291918855#heading-15)
+- [Nginx指定多个域名跨域配置](https://zhuanlan.zhihu.com/p/397562478) - $http_origin 在此处的应用示例
