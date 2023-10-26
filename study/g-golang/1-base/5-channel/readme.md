@@ -6,7 +6,7 @@ channel的应用场景分为5类。
 
 1. 数据交流： 当做并发的buffer或者queue，解决生产者-消费者问题。 多个goroutine可以并发当做生产者和消费者。
 2. 数据传递： 一个goroutine可以将数据交给另一个goroutine，相当于把所有权(引用)托付出去。
-3. 信号通知： 一个goroutine可以将金浩（closeing、closed、data ready等）传递给另一个或一组goroutine
+3. 信号通知： 一个goroutine可以将信号（closeing、closed、data ready等）传递给另一个或一组goroutine
 4. 任务编排：可以让一组goroutine按照一定的顺序并发或者串性执行，这就是编排的功能
 5. 锁： 利用Channel也可以实现互斥锁的机制
 
