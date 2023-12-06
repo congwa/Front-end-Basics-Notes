@@ -126,7 +126,7 @@ Open Graph 是一种用于在社交媒体平台上自定义内容展示的协议
 <meta name="robots" content="index, follow" />
 ```
 
-### 5. robats.text
+### 5. robots.text
 
 为了指定`站点地图`的位置
 
