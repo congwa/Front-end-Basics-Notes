@@ -165,8 +165,10 @@ Sitemap: https://leerob.io/sitemap.xml
 
 ```
 
+## 相关内容传送门
+
 - 如需要更多的结构化数据说明，[在谷歌的搜索引擎指引上面有明确的说明](https://developers.google.cn/search/docs/appearance/structured-data/intro-structured-data?hl=zh-cn)
 
-- 同时也可以看我这篇[总结](/study/7-前端/结构化数据.md)
-- 在next.js中，[构建的时候生成站点地图](/study/7-前端/google_Sitelinks_sitemap.md)教程, 只适用于可预测页面数量的项目，不适用于基于动态数据库填充的cms项目，如果要做到可以使用定时任务等手段，动态扫描库，重新生成站点地图，同时也可以在write逻辑的时候进行直接生成站点地图。
+- 同时也可以看我这篇[总结](/study/7-前端/搜索引擎优化/结构化数据.md)
+- 在next.js中，[构建的时候生成站点地图](/study/7-前端/搜索引擎优化/google_Sitelinks_sitemap.md)教程, 只适用于可预测页面数量的项目，不适用于基于动态数据库填充的cms项目，如果要做到可以使用定时任务等手段，动态扫描库，重新生成站点地图，同时也可以在write逻辑的时候进行直接生成站点地图。
 - facebook的[openGraph文档](https://ogp.me/)
