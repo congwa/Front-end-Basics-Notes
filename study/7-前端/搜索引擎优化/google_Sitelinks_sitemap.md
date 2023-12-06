@@ -16,6 +16,7 @@
 
 ## robots
 
+- nextjs中添加站点地图
 [https://leerob.io/blog/nextjs-sitemap-robots](https://leerob.io/blog/nextjs-sitemap-robots)
 
 
