@@ -1,5 +1,10 @@
 # wsl
 
+
+## 微软wsl培训
+
+[https://learn.microsoft.com/zh-cn/training/modules/wsl-introduction/?source=recommendations](https://learn.microsoft.com/zh-cn/training/modules/wsl-introduction/?source=recommendations)
+
 ## github不能拉取，22端口占用快速解决
 
 SSH Server For Windows并占用了默认的22端口，因此如果要在WSL中使用github可以使用443端口

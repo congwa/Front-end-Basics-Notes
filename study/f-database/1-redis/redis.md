@@ -104,3 +104,36 @@ geodist loc guangguang dogndong
 ```sh
 expire dogn1 30
 ```
+
+## 删除指定token缓存
+
+```sh
+redis-cli -h 172.31.62.240 -p 6379 -a D4VUuT8YH7 -n 13 keys "src.main.biz.accounts.web.SpCnapsBook:names" | xargs redis-cli -h 172.31.62.240 -p 6379 -a D4VUuT8YH7 -n 13 del
+
+# redis-cli：Redis命令行工具，用于执行与Redis数据库交互的命令。
+
+# -h 172.31.62.240：指定Redis服务器的主机地址为172.31.62.240。
+
+# -p 6379：指定Redis服务器的端口号为6379。
+
+# -a D4VUuT8YH7：指定连接到Redis服务器所需的密码，这里是D4VUuT8YH7。
+
+# -n 13：指定要使用的Redis数据库编号，这里是数据库13。
+
+# keys "src.main.biz.accounts.web.SpCnapsBook:names"：通过keys命令查找与给定模式匹配的所有键。在这里，使用了通配符模式，查找键名为src.main.biz.accounts.web.SpCnapsBook:names的所有键。
+
+# | xargs redis-cli -h 172.31.62.240 -p 6379 -a D4VUuT8YH7 -n 13 del：使用xargs将上一个命令的输出作为参数传递给下一个redis-cli命令，执行del命令删除找到的所有键。
+
+```
+
+## 连接
+
+```sh
+
+redis-cli -h [ip] -p 6379 -a [password]
+# 原生方式显示
+redis-cli -h [ip] -p 6379 -a [password] -raw
+# 指定库
+redis-cli -h [ip] -p 6379 -a [password] -n 13
+
+```
