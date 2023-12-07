@@ -68,3 +68,24 @@ netstat 命令用于显示与 IP、TCP、UDP 和 ICMP 协议相关的统计数�
 ```sh
 sudo netstat -tuln | grep <port_number>
 ```
+
+## 统计处于 `TIME_WAIT` 状态的网络连接数
+
+```sh
+netstat -ae | grep "TIME_WAIT" | wc -l
+```
+
+## 统计当前系统中不同状态的 TCP 连接数量，并按连接状态的数量降序排列
+
+```sh
+# 统计当前系统中不同状态的 TCP 连接数量，并按连接状态的数量降序排列
+netstat -ant | awk 'NR>2{print $6}'| sort|uniq -c|sort -rn
+
+#  57 ESTABLISHED 表示已经建立的正常数据传输连接的数量为 57。
+#   12 CLOSE_WAIT 表示连接已经被远程端关闭，本地端等待关闭连接的数量为 12。
+#    8 TIME_WAIT 表示连接已经关闭，但是等待足够的时间以确保远程端收到关闭的通知的数量为 8
+#    5 LISTEN  表示服务器正在等待客户端连接的数量为 5
+#    2 SYN_SENT 表示正在请求与远程端建立连接的数量为 2
+#    1 FIN_WAIT1 表示连接已经关闭，但是仍在等待来自远程端的确认的数量为各自 1
+#    1 FIN_WAIT2 表示连接已经关闭，但是仍在等待来自远程端的确认的数量为各自 1
+```
