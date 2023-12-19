@@ -24,3 +24,8 @@ source venv\Scripts\activate
 # 退出虚拟环境
 deactivate
 ```
+
+```sh
+# vscode
+source /Users/cong/code/company/operate_spider/operate_spider/bin/activate
+```
