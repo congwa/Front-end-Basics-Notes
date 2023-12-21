@@ -18,3 +18,14 @@ pipreqs . --encoding=utf8 --force
 ```sh
 pip install -r requirements.txt
 ```
+
+## 切换源
+
+```sh
+#  切换为阿里云的源
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
+#查看当前源
+pip config get global.index-url
+
+```
