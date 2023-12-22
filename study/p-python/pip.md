@@ -19,6 +19,14 @@ pipreqs . --encoding=utf8 --force
 pip install -r requirements.txt
 ```
 
+## 4. 删除所有依赖
+
+```sh
+pip freeze >requirements.txt
+
+pip uninstall -r requirements.txt -y
+```
+
 ## 切换源
 
 ```sh
