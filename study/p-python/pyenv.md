@@ -52,3 +52,12 @@ pyenv shell --unset
 ```sh
 shell > local > global
 ```
+
+
+## 更换国内源
+
+```sh
+echo 'export PYTHON_BUILD_MIRROR_URL_SKIP_CHECKSUM=1' >> ~/.bash_profile
+echo 'export PYTHON_BUILD_MIRROR_URL="https://registry.npmmirror.com/-/binary/python"' >> ~/.bash_profile
+source ~/.bash_profile
+```

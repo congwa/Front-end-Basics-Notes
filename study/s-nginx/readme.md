@@ -114,6 +114,18 @@ nginx服务器默认值情况
 1. nginx使用默认值的情况，会使用协商缓存，下发etag和 Last-Modified信息
 2. 服务端接收 max-age:0 的请求头，进行重新验证下发
 
+
+## spa项目部署二级域名配置
+
+```nginx
+location /sentiment {
+    try_files $uri $uri/ /sentiment/index.html;
+    alias  /Users/cong/code/company/public-sentiment/dist;
+    index  index.html index.htm;
+}
+
+```
+
 ## 参考地址
 
 - [Nginx一网打尽：动静分离、压缩、缓存、黑白名单、跨域、高可用、性能优化...想要的这都有](https://juejin.cn/post/7112826654291918855#heading-15)
