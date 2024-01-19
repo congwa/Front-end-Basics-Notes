@@ -68,3 +68,14 @@ driver = webdriver.Chrome(service=service, options=options)
 
 ```
 
+
+### 3. selenium不带自己的浏览器，可以指定浏览器执行文件
+
+[https://github.com/clemfromspace/scrapy-selenium](https://github.com/clemfromspace/scrapy-selenium) 此源码包中
+
+- SELENIUM_DRIVER_EXECUTABLE_PATH   指定driver执行文件
+- SELENIUM_BROWSER_EXECUTABLE_PATH  指定浏览器执行文件
+
+### 4. 以上方案还是不是很好，因为需要手动配置不同平台的执行文件。还要os查找路径。 使用Phantomjs（无界面的浏览器）来直接指定浏览器
+
+[https://www.cnblogs.com/ypppt/p/13323374.html](https://www.cnblogs.com/ypppt/p/13323374.html)
