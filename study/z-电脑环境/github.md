@@ -55,9 +55,9 @@ ssh-keygen -f ~/.ssh/astro3_deploy_key
 3. 在服务器的SSH配置文件中添加一个别名条目。打开SSH配置文件（通常是~/.ssh/config），并将以下内容添加到文件末尾或者已经存在的条目下面：
 
 ```sh
-Host github.com-url168
+Host github.com-url169
     HostName github.com
-    IdentityFile ~/.ssh/astro3_deploy_key
+    IdentityFile ~/.ssh/wordpress_docker_deploy_key
 ```
 
 这个别名是我们为`url168/astro3`仓库取的名字，后面跟上`HostName`和`IdentityFile`分别指定了该仓库的主机名和私钥文件的路径。
