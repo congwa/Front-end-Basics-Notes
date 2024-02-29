@@ -6,4 +6,4 @@ chrome 团队文档
 
 ## demo
 
-- [按钮hover](https://codepen.io/Chokcoco/pen/KKEdOeb)
+- [按钮hover](https://codepen.io/Chokcoco/pen/KKEdOeb)  -- 这样也起到了根据 **文字颜色自动适配背景色** 的效果
