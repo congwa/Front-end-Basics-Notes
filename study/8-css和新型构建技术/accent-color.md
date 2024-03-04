@@ -10,3 +10,12 @@
 ```
 
 [coco大佬的完整demo](https://codepen.io/Chokcoco/pen/OJqGmBR)
+
+
+
+通常而言，更多的时候，我们会将 accent-color 应用于：
+
+- checkbox
+- radio
+- range
+- progress
