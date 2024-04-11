@@ -75,3 +75,6 @@ print(data.query('month == 1 and day == 1'))
 
 #  对于数据记录按照月为频率取样
 print('day == 1')
+
+
+# 测试
