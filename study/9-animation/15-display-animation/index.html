@@ -1,0 +1,93 @@
+<!-- 目前此动画没有机型clone，更完善的版本应该clone的进行执行动画，执行完动画clone的删除，原标签恢复终态 -->
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .fade-animation {
+      transition: opacity 2s ease-in-out;
+    }
+  
+    .hidden {
+      display: none;
+    }
+  
+    .absolute-position {
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <button id="showButton">显示</button>
+  <button id="hideButton">隐藏</button>
+  <div id="myElement" class="fade-animation">要隐藏或显示的元素</div>
+
+  <script>
+    const showButton = document.getElementById('showButton');
+    const hideButton = document.getElementById('hideButton');
+    const element = document.getElementById('myElement');
+
+    showButton.addEventListener('click', () => {
+
+      // 触发重渲染，确保浏览器有机会应用初始状态
+      element.style.display = 'block';
+      element.style.opacity = '0';
+      const initialRect = element.getBoundingClientRect();
+      element.classList.add('absolute-position');
+      // 添加 fade-animation 类名以触发动画
+      element.classList.add('fade-animation');
+      const finalRect = element.getBoundingClientRect();
+      const deltaX = initialRect.left - finalRect.left;
+      const deltaY = initialRect.top - finalRect.top;
+      element.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+      element.offsetHeight; // 强制更新布局
+    
+
+      requestAnimationFrame(() => {
+        // 使用 FLIP 技术进行动画
+        
+        element.style.opacity = '1';
+        
+
+      });
+
+      // 监听过渡结束事件
+      element.addEventListener('transitionend', function onTransitionEnd() {
+        element.classList.remove('hidden');
+        element.classList.remove('absolute-position');
+        element.style.transform = '';
+        element.style.opacity = '';
+        element.removeEventListener('transitionend', onTransitionEnd);
+      });
+    });
+
+    hideButton.addEventListener('click', () => {
+      element.classList.add('fade-animation');
+
+      // 使用 FLIP 技术进行动画
+      requestAnimationFrame(() => {
+        const initialRect = element.getBoundingClientRect();
+        element.classList.add('absolute-position');
+        const finalRect = element.getBoundingClientRect();
+        const deltaX = initialRect.left - finalRect.left;
+        const deltaY = initialRect.top - finalRect.top;
+
+        element.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        element.style.opacity = '0';
+
+        // 监听过渡结束事件
+        element.addEventListener('transitionend', function onTransitionEnd() {
+          element.style.display = 'none';
+          element.classList.add('hidden');
+          element.classList.remove('absolute-position');
+          element.style.transform = '';
+          element.style.opacity = '';
+          element.removeEventListener('transitionend', onTransitionEnd);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

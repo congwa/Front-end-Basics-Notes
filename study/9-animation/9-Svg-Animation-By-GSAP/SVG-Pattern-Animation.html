@@ -1,0 +1,121 @@
+<!-- 
+
+想要在Web页面中绘制背景图案，我们首先可能想到的是使用 CSS，可能你也有所尝试，比如简单的渐变到复杂的网格、点阵等，SVG 中也有绘制背景图案的解决方案。
+
+
+SVG 中 fill 属性支持以 pattern 方式填充一个图案，Pattern 也是一个强大的元素声明，如果图案设计的比较完美，那么会轻易得到一个无缝衔接的图案
+
+在 Web 页面开发中如果想使用 SVG 生成背景，实际上有两种使用方法：
+
+一个纯 SVG Pattern 使用的过程大致如下：
+
+1. 在 SVG 中声明一个 `pattern` 元素
+2. `pattern` 中要声明我们想要绘制的图形
+3. 创建一个新的图形，使用 SVG 中的 `fill` 属性，填充图案
+
+
+SVG as background-image
+这种方法其实是结合 CSS 使用 SVG ，过程如下：
+
+1. 创建好一个 SVG 图形，无需声明 `pattern` 元素
+2. 使用 `background-image` 引入 Base64 转码过的 Data-URI
+
+.bg {
+  background-image: url("data:image/svg+xml;%3csvg.../svg%3E");
+}
+ -->
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+        <title>svg图案动画</title>
+    </head>
+    <style>
+        body {
+            height: 100vh;
+            margin: 0;
+            animation: backgroundshift 3s alternate infinite;
+        }
+
+        @keyframes backgroundshift {
+            0% {
+                background: white;
+            }
+            50% {
+                background: black;
+            }
+            100% {
+                background: white;
+            }
+        }
+    </style>
+    <body>
+        <div style="width: 100%; height: 100%; overflow: hidden;">
+            <svg width="100%" height="100%">
+                <defs>
+                    <pattern
+                        id="blocks"
+                        patternUnits="userSpaceOnUse"
+                        width="200"
+                        height="200"
+                    >
+                        <rect
+                            width="100"
+                            height="100"
+                            class="black"
+                            fill="#000"
+                        />
+                        <rect
+                            width="100"
+                            height="100"
+                            class="white"
+                            fill="#fff"
+                            x="100"
+                        />
+                        <rect
+                            width="100"
+                            height="100"
+                            class="white"
+                            fill="#fff"
+                            y="100"
+                        />
+                        <rect
+                            width="100"
+                            height="100"
+                            x="100"
+                            y="100"
+                            class="black"
+                            fill="#000"
+                        />
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#blocks)" />
+            </svg>
+        </div>
+    </body>
+    <script>
+        const tl = gsap.timeline({});
+
+        tl.to(".black", {
+            duration: 3,
+            scale: 0.01,
+            rx: 50,
+            transformOrigin: "50% 50%",
+            ease: Linear.easeNone,
+            repeat: -1,
+            yoyo: true,
+        }).to(".white", {
+            duration: 3,
+            scale: 0.01,
+            rx: 50,
+            transformOrigin: "50% 50%",
+            ease: Linear.easeNone,
+            repeat: -1,
+            yoyo: true,
+        });
+    </script>
+</html>

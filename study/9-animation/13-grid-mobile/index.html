@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>grid mobile</title>
+</head>
+<style>
+.grid-box {
+  border: 1px solid #999;
+  width: 200px;
+  height: 400px;
+  display: grid;
+  margin: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 6px;
+  padding: 6px;
+  grid-auto-flow: dense;
+}
+.grid-box > div {
+  background-color: bisque;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.grid-box-item-1 {
+  grid-column-end: span 2; /* 1x2 */
+}
+.grid-box-item-2 {
+  grid-row-end: span 2; /* 2x1 */
+}
+.grid-box-item-3 { /* 2x2 */
+  grid-column-end: span 2;
+  grid-row-end: span 2;
+}
+
+
+</style>
+<body>
+  <div class="grid-box" id="box"></div>
+  <button onclick="randomItem()">点击重新布局</button>
+</body>
+<script>
+  function randomItem() {
+    let boxEl = document.getElementById('box');
+    let styleArr = [0,0,0,0,1,1,2,3];
+    styleArr = styleArr.sort(() => {
+      return Math.random() > 0.5 ? 1 : -1;   
+    });
+    let itemsEl = '';
+    for (let i = 0; i < styleArr.length; i++) {
+      itemsEl += `<div class="grid-box-item-${styleArr[i]}">${i}</div>`;
+    }
+
+    boxEl.innerHTML = itemsEl;
+  }
+  window.onload = function(){
+    randomItem();
+  }
+</script>
+</html>

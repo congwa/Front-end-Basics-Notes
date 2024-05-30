@@ -1,0 +1,220 @@
+<!-- 滚动驱动 -->
+<!-- 
+
+    通过监听用户的 鼠标滚轮/触摸板 的滚动来控制时间轴的 播放/倒放
+
+    对应到时间轴中就是控制 currentTime 的增减
+
+    所以首先，我们需要在页面上定一个滚动区，当用户滚动的时候，获取这个滚动区的scrollTop, 然后映射到时间轴上的时间区间，
+    那么就实现了简单的通过滚动驱动来控制时间轴，时间轴控制css动画的播放/暂停/倒放
+
+
+
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TimeLine时间轴</title>
+    <style>
+        body {
+            height: 5000px;
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 滚动视察效果要让显示区块为fixed，这样不用计算滚动高度 -->
+    <!-- 思考？ 组合动画的时候怎么判断什么时间取消fixed -->
+    <!-- 这里有一个很聪明的设计，就是再fixed的元素包一个父标签，计算父标签的margin为滚动最大距离，当父标签滚动到底的时候，取消fixed ，通过把元素放回父标签的最底部，实现视觉原位效果-->
+    <div id="box" style="
+        width: 300px;
+        height: 300px;
+        position: fixed;
+        background-color: red;
+      "></div>
+</body>
+<script>
+    function linear(t, b, _c, d) {
+        var c = _c - b;
+        return (c * t) / d + b;
+    }
+
+    let perTime = 1000 / 60; // 1000 毫秒内渲染 60帧，那么每间隔 16.6毫秒渲染一帧
+    let animationData = [
+        {
+            key: "left",
+            defaultValue: 0,
+            currentValue: 0,
+            target: 500,
+            duration: 5000,
+            startTime: 1000,
+        },
+        {
+            key: "opacity",
+            defaultValue: 1,
+            currentValue: 1,
+            target: 0.5,
+            duration: 8000,
+            startTime: 3000,
+        },
+    ];
+
+    // startTime 开始的时刻，从第x秒开始，单位是毫秒
+    let currentTime = 0; // 当前时刻
+    let endTime = 0;
+
+    animationData.forEach((item) => {
+        const { duration, startTime } = item;
+        endTime = Math.max(duration + startTime, endTime); // 计算出在什么时刻需要结束
+    });
+
+    let box = document.getElementById("box");
+
+    // 是否是顶层
+    const isWindow = (obj) => {
+        const toString = Object.prototype.toString.call(obj);
+        return (
+            toString === "[object global]" ||
+            toString === "[object Window]" ||
+            toString === "[object DOMWindow]"
+        );
+    };
+    
+    function toFixed(num, length) {
+        const _rnd = length ? Math.pow(10, length) : 100000;
+        const n = num | 0;
+        const dec = num - n;
+        let fixed = num;
+        if (dec) {
+            const r = ((dec * _rnd + (num < 0 ? -0.5 : 0.5) | 0) / _rnd);
+            const t = r | 0;
+            const str = r.toString();
+            const decStr = str.split('.')[1] || '';
+            fixed = `${num < 0 && !(n + t) ? '-' : ''}${n + t}.${decStr}`;
+        }
+        return parseFloat(fixed);
+    }
+
+    // 映射转换函数
+    // s 是 区间[a1, a2] 的值
+    // 返回 s map 映射到 [b1, b2] 后的值
+    // https://www.cnblogs.com/heenhui2016/p/12729573.html
+    // 原理也就是先归零，然后再同比例缩放
+    /**
+     *  (s - a1)/(a2 - a1) = (result - b1)/(b2 - b1)
+     */
+    function map(s, a1, a2, b1, b2) {
+        return ((s - a1) / (a2 - a1)) * (b2 - b1) + b1
+    }
+
+    // 获取当前滚动的高度
+    const scrollTop = (ele, target) => {
+        const isWin = isWindow(ele);
+        const y =
+            window.pageYOffset !== undefined
+                ? window.pageYOffset
+                : (
+                    document.documentElement ||
+                    document.body.parentNode ||
+                    document.body
+                ).scrollTop;
+
+        if (typeof target === "number" && !isNaN(target)) {
+            if (isWin) {
+                document.documentElement.scrollTop = target;
+                document.body.scrollTop = target;
+            } else {
+                ele.scrollTop = target;
+            }
+        }
+
+        return isWin ? y : ele.scrollTop;
+    };
+
+    // 工具高阶函数scrollGate，它能够允许我们判断用户的滚动方向
+    function scrollGate(callback) {
+        let before = 0;
+
+        return function () {
+            const current = scrollTop(window);
+            const delta = current - before;
+
+            if (delta >= 0) {
+                callback && callback("down");
+            } else {
+                callback && callback("up");
+            }
+
+            before = current;
+        };
+    }
+
+    function _render() {
+        //计算当前滚动高度相当于多长时间，利用map映射函数转换
+        currentTime = Math.max(
+            map(
+                scrollTop(window),
+                0,
+                document.body.scrollHeight - window.innerHeight,
+                0,
+                endTime
+            ),
+            0
+        );
+
+        animationData.forEach((item) => {
+            const { startTime, duration, defaultValue, target, currentValue } =
+                item;
+
+            // 当时间线到达开始时间后，执行该时间线动画
+            // 当到达时间结束的时候，停止动画
+            if (currentTime >= startTime && currentTime <= startTime + duration) {
+                let calcValue = linear(
+                    currentTime - startTime,
+                    defaultValue,
+                    target,
+                    duration
+                );
+                item.currentValue = toFixed(calcValue);
+            }
+        });
+        console.log("div 位移：", animationData[0].currentValue);
+        console.log("div 透明度变化：", animationData[1].currentValue);
+        console.log("当前时刻为：", currentTime);
+        console.log("\n");
+
+        // 这里把计算的结果赋值给 div
+        box.style.left = animationData[0].currentValue + "px";
+        box.style.opacity = animationData[1].currentValue;
+
+        box.innerText = `left: ${animationData[0].currentValue},opacity: ${animationData[1].currentValue} `;
+
+        // 只要时间没有结束，就继续执行, 如果是倒放，就让currentTime > 0 即可
+    }
+
+    // 滚动事件的回调
+    function _scrollHandler(dir) {
+        if (dir === "down") {
+            reverse = false;
+            _render(); // 正向渲染，执行上文的计算+映射逻辑
+        }
+
+        if (dir === "up") {
+            reverse = true;
+            _render(); // 反向渲染，执行上文的计算+映射逻辑
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", function () {
+        const scrollHandler = scrollGate(_scrollHandler);
+        window.addEventListener("scroll", scrollHandler);
+    });
+</script>
+
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>补间动画</title>
+  </head>
+  <body>
+    <div id="box" style="width: 300px; height: 300px; background-color: red; position: absolute;"></div>
+  </body>
+  <script>
+    function linear(t, b, _c, d) {
+      let c = _c - b;
+      return (c * t) / d + b;
+    }
+
+    let box = document.getElementById('box');
+
+    let perTime = 1000 / 60; // 1000 毫秒内渲染 60帧， 那么每间隔 16.6毫秒渲染一帧
+    let currentTime = 0; // 初始时刻为 0秒
+    let duration = 50000; // 总时长是 50秒
+
+    let defaultTarget = (currentValue = 100); // 初始值为100px, 当前值也是100px
+    let target = 200; // 目标值为200px
+
+    window.requestAnimationFrame(_render)
+    function _render() {
+      currentTime += perTime; // 每渲染一次，时长加一点
+      currentValue = linear(currentTime, defaultTarget, target, duration);
+      console.log(currentValue, target, currentTime);
+      // 如果每次计算的结果丢给一个 叫 box 的div ，那div是不是就动起来了？
+      box.style.left = `${currentValue}px`;
+      box.innerText = ` box.style.left = ${currentValue} px`;
+
+      // 只要没有达到200px 就一直跑渲染函数
+      if (currentValue < target) {
+        window.requestAnimationFrame(_render)
+      }
+    }
+  </script>
+</html>
