@@ -238,6 +238,7 @@ useDeferredValue 可以让我们延迟渲染不紧急的部分。
 
 类似于防抖但没有固定的延迟时间，延迟的渲染会在紧急的部分先出现在浏览器屏幕以后才开始，并且可中断不会阻塞用户输入
 
+[https://juejin.cn/post/7260326520336760893](https://juejin.cn/post/7260326520336760893) - 补充例子
 
 ## useTransition() startTransition  useTransition [文档](https://react.dev/reference/react/useTransition)
 
