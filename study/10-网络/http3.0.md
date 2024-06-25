@@ -39,5 +39,4 @@ quic实现了tcp的可靠性、拥塞控制、流量控制、排序等功能并�
 
     quic使用随机数作为connectionID,来识别客户端和同域名服务器建立的连接。从而不受网络变化的影响，通过connection id 确定了链接，就可以实现和http2一样的双向流多路复用功能。非常适合移动互联网。
 
-
-
+[为什么 QUIC 优于 TCP？（](https://engineeringatscale.substack.com/p/how-quic-is-displacing-tcp-for-speed)
