@@ -29,3 +29,5 @@ const useNextTick = (fn?: () => void) => {
 2. 如果 fn 函数在每次渲染时都创建一个新函数（例如直接在 JSX 中定义匿名函数），会导致 useEffect 反复执行。可以通过 useCallback 或 useMemo 缓存 fn，减少不必要的重新渲染
 
 思考： 此hook多数情况下使用useEffect就满足结果了
+
+思考2：在react18开启时间切片后，有可能会导致“意外”结果
