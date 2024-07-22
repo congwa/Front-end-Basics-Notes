@@ -119,3 +119,5 @@ func getData(key string) (string, error) {
 ## 实现原理
 
 TODO: singleflight实现原理
+
+[七天用Go从零实现系列-分布式防止缓存击穿](https://geektutu.com/post/geecache-day6.html)
