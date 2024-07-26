@@ -118,10 +118,11 @@ nginx服务器默认值情况
 ## spa项目部署二级域名配置
 
 ```nginx
+
 location /sentiment {
-    try_files $uri $uri/ /sentiment/index.html;
+    try_files $uri $uri/ /index.html;
     alias  /Users/cong/code/company/public-sentiment/dist;
-    index  index.html index.htm;
+    index  index.html  index.htm;
 }
 
 ```

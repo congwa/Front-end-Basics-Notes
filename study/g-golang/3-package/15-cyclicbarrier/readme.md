@@ -30,6 +30,67 @@
 TODO: 
 
 
+## 利用waitGroup实现循环栅栏
+
+```go
+// 使用 sync.WaitGroup 和 sync.Mutex 实现一个循环栅栏(Cyclic Barrier),来确保所有的 goroutine 都达到某个同步点后才继续执行
+package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+func main() {
+    // 定义要计算的数组
+    nums := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+    // 创建一个 WaitGroup 用于跟踪 goroutine 的执行
+    var wg sync.WaitGroup
+    wg.Add(len(nums))
+
+    // 创建一个 Mutex 和 Condition 用于实现循环栅栏
+    var mutex sync.Mutex
+    var cond = sync.NewCond(&mutex)
+    var count int // 用于记录到达同步点的 goroutine 数量
+
+    // 创建一个 channel 用于接收计算结果
+    results := make(chan int, len(nums))
+
+    // 启动 goroutine 并行计算数字的平方和
+    for _, num := range nums {
+        go calculateSquareSum(num, results, &wg, &cond, &count)
+    }
+
+    // 等待所有 goroutine 执行完毕
+    wg.Wait()
+
+    // 从 channel 中收集计算结果并累加
+    var total int
+    for i := 0; i < len(nums); i++ {
+        total += <-results
+    }
+
+    fmt.Println("The sum of square of numbers is:", total)
+}
+
+func calculateSquareSum(num int, results chan<- int, wg *sync.WaitGroup, cond *sync.Cond, count *int) {
+    defer wg.Done() // 在 goroutine 结束时减少 WaitGroup 的计数器
+
+    squareSum := num * num
+    results <- squareSum
+
+    cond.L.Lock() // 获取 Mutex 锁
+    *count++      // 增加到达同步点的 goroutine 数量
+    if *count == len(results) { // 如果所有 goroutine 都到达同步点
+        cond.Broadcast() // 唤醒所有等待的 goroutine
+    } else {
+        cond.Wait() // 等待其他 goroutine 到达同步点
+    }
+    cond.L.Unlock() // 释放 Mutex 锁
+}
+```
+
 ## 使用示例
 
 
