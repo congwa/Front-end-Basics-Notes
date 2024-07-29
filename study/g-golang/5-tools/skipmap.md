@@ -1,4 +1,4 @@
-# 跳表
+# 跳表（map）
 
 
 [跳表的实现- https://github1s.com/songzhibin97/gkit/blob/master/structure/skipmap/skipmap.go](https://github1s.com/songzhibin97/gkit/blob/master/structure/skipmap/skipmap.go)
@@ -23,4 +23,3 @@
 - 缓存系统
     在缓存系统中,跳表可以作为底层的数据结构,支持快速的键值对查找和管理。
     Redis 等缓存系统中广泛使用跳表来实现有序集合(Sorted Set)功能。
-    
