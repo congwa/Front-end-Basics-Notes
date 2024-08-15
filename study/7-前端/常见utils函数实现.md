@@ -37,6 +37,178 @@
 
     ```
 
+## 异步防抖
+
+    ```js
+    // 在debounceAsync里，如果任务没有执行则会返回一个always pending promise
+    // debounceAsync 处理异步任务的执行时机
+    export function debounceAsync(fn, ms = 300) {
+      let timeoutId;
+      return function debouncedFiltered(...args) {
+        return new Promise((resolve, reject) => {
+          if (timeoutId !== void 0) {
+            clearTimeout(timeoutId);
+          }
+          timeoutId = setTimeout(() => {
+            fn.call(this, ...args)
+              .then(resolve)
+              .catch(reject);
+          }, ms);
+        });
+      };
+    }
+    ```
+
+## 异步防抖处理
+
+```js
+
+// debounceAsyncResult 处理已经执行的异步任务的结果
+export function debounceAsyncResult(fn) {
+  let lastFetchId = 0;
+  return function asyncDebounced(...args) {
+    const fetchId = ++lastFetchId;
+    return new Promise((resolve, reject) => {
+      fn.call(this, ...args)
+        .then((...rez) => {
+          if (fetchId === lastFetchId) {
+            resolve(...rez);
+          }
+        })
+        .catch((...err) => {
+          if (fetchId === lastFetchId) {
+            reject(...err);
+          }
+        });
+    });
+  };
+}
+
+
+```
+
+## 异步节流处理
+
+  ```js
+
+  //  异步节流：上一次的promise pending期间，不会再次触发(上一次请求没有结束，下一次的不会进行请求)
+  export function throttleAsyncResult(fn, { useSamePromise = false } = {}) {
+    let isPending = false;
+    let theLastPromise = null;
+    return function asyncThrottled(...args) {
+      if (isPending) {
+        if (useSamePromise && theLastPromise) {
+          return theLastPromise;
+        }
+        // 此promise会永远等待下去
+        return new Promise(() => {});
+      } else {
+        const ret = fn
+          .call(this, ...args)
+          .then((...a1) => {
+            isPending = false;
+            theLastPromise = null;
+            return Promise.resolve(...a1);
+          })
+          .catch((...a2) => {
+            isPending = false;
+            theLastPromise = null;
+            return Promise.reject(...a2);
+          });
+        theLastPromise = ret;
+        isPending = true;
+        return ret;
+      }
+    };
+  }
+  ```
+
+## 重试
+
+```js
+export function withRetryAsync(fn, {
+  maxCount = 3,
+  retryInterval = 1000,
+  onRetry = (i) => {},
+  onFailed = (i, lastFailedReason) => {},
+} = {}) {
+  return function withRetryedAsync(...args) {
+    return new Promise((resolve, reject) => {
+      let retriedCount = 0;
+
+      const that = this;
+      execTask();
+
+      function execTask() {
+        onRetry(++retriedCount);
+        fn.call(that, ...args)
+          .then((...r) => {
+            resolve(...r);
+          })
+          .catch((...e) => {
+            if (retriedCount >= maxCount) {
+              onFailed(retriedCount, e);
+              reject(...e);
+            } else {
+              onFailed(retriedCount, e);
+              setTimeout(execTask, retryInterval);
+            }
+          });
+      }
+    });
+  };
+}
+
+```
+
+## 扇出
+
+```js
+// 将一个数据源分发到多个目标
+function fanOut(sourcePromise, ...targets) {
+  return sourcePromise
+    .then(data => {
+      return Promise.all(targets.map(target => {
+        return new Promise((resolve, reject) => {
+          try {
+            target(data);
+            resolve(); 
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }));
+    })
+    .catch(error => {
+      console.error('Error in sourcePromise:', error);
+    });
+}
+```
+
+## 扇入
+
+```js
+// 扇入：多个promise，等待所有都完成 // 注意和promise.all的区别  rxjs有类似实现
+function fanInReflect(...promises) { 
+  return new Promise((resolve, reject) => {
+    const results = [];
+    let completed = 0;
+    function handleResult(index, result) {
+      results[index] = result;
+      completed++;
+      if (completed === promises.length) {
+        resolve(results);
+      }
+    }
+    promises.forEach((promise, index) => {
+      promise
+        .then(result => handleResult(index, { result, status: 'fulfilled' }))
+        .catch(error => handleResult(index, { error, status: 'rejected' }));
+    });
+  });
+}
+```
+
 ## 数据是否为空
 
 ```javascript
