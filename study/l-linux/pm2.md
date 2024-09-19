@@ -8,6 +8,9 @@ PM2: 网站的访问量比较大，有完整的监控页面
 ```sh
 #start命令启动对应的node server文件
 pm2 start ./build/server.js
+
+# npm工程持续给人演示的情况
+pm2 start pnpm -- run dev
 ```
 
 ## 保存当前已启动的服务
