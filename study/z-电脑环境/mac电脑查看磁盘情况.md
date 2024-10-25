@@ -11,6 +11,6 @@ smartctl -a disk0
 ```
 
 ```sh
-# p情况
+# mac ip情况
 ifconfig | grep "inet "
 ```
