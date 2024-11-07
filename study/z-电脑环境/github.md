@@ -57,7 +57,7 @@ ssh-keygen -f ~/.ssh/astro3_deploy_key
 ```sh
 Host github.com-url169
     HostName github.com
-    IdentityFile ~/.ssh/wordpress_docker_deploy_key
+    IdentityFile ~/.ssh/astro3_deploy_key
 ```
 
 这个别名是我们为`url168/astro3`仓库取的名字，后面跟上`HostName`和`IdentityFile`分别指定了该仓库的主机名和私钥文件的路径。
@@ -65,7 +65,7 @@ Host github.com-url169
 4. 使用别名克隆仓库。现在，你可以使用以下命令从服务器上克隆该仓库：
 
 ```sh
-git clone git@github.com-url168:url168/astro3.git
+git clone git@github.com-url169:url168/astro3.git
 ```
 
 这将使用为该别名指定的唯一部署密钥进行身份验证。
