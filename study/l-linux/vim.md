@@ -52,3 +52,6 @@
 | 命令行模式 | :wq | 保存并退出Vim |
 | 命令行模式 | :e \<文件名\> | 打开指定文件 |
 
+## lazyvim
+
+[https://www.lazyvim.org/installation](https://www.lazyvim.org/installation)
