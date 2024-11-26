@@ -24,6 +24,8 @@ pip install -r requirements.txt
 ```sh
 pip freeze >requirements.txt
 
+pipreqs ./ --encoding=utf8 --force --use-local
+
 pip uninstall -r requirements.txt -y
 ```
 
