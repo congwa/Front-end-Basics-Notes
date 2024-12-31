@@ -22,16 +22,8 @@ ssh-keygen -f ~/.ssh/biomed168_admin_key
 
 ```sh
 # 标准 GitHub 配置
-Host github.com
-    Hostname ssh.github.com
-    Port 443
-    User git
-
-# biomed168-admin 仓库专用配置
 Host github.com-biomed168
-    HostName ssh.github.com
-    Port 443
-    User git
+    HostName github.com
     IdentityFile ~/.ssh/biomed168_admin_key
 ```
 
