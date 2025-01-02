@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>烟花效果</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<script>
+class Firework {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.particles = []; // 烟花粒子
+        this.rockets = [];   // 烟花弹
+        
+        // 配置参数
+        this.PARTICLE_COUNT = 100;  // 每个烟花的粒子数
+        this.ROCKET_SPEED = 2;      // 烟花弹上升速度
+        this.PARTICLE_DECAY = 0.02; // 粒子消失速度
+        this.AUTO_LAUNCH_INTERVAL = 800; // 自动发射间隔(毫秒)，改为更短的间隔
+        
+        this.init();
+    }
+
+    init() {
+        // 设置画布尺寸为全屏
+        this.resizeCanvas();
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => this.resizeCanvas());
+        
+        // 监听点击事件发射烟花
+        this.canvas.addEventListener('click', (e) => {
+            this.launchRocket(e.clientX);
+        });
+
+        // 自动发射烟花
+        setInterval(() => {
+            if (Math.random() < 0.8) { // 提高发射概率到80%
+                this.launchRocket(Math.random() * this.canvas.width);
+            }
+        }, this.AUTO_LAUNCH_INTERVAL);
+
+        // 开始动画循环
+        this.animate();
+    }
+
+    resizeCanvas() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    // 发射烟花弹
+    launchRocket(x) {
+        const rocket = {
+            x: x,
+            y: this.canvas.height,
+            targetY: this.canvas.height * 0.2 + Math.random() * this.canvas.height * 0.3,
+            color: `hsl(${Math.random() * 360}, 50%, 50%)`,
+            size: 2,
+            trail: [] // 添加尾迹数组
+        };
+        this.rockets.push(rocket);
+    }
+
+    // 创建爆炸效果
+    createExplosion(x, y, color) {
+        const hue = parseInt(color.match(/\d+/)[0]); // 提取色相值
+        for(let i = 0; i < this.PARTICLE_COUNT; i++) {
+            const angle = (Math.PI * 2 / this.PARTICLE_COUNT) * i;
+            const speed = 1 + Math.random() * 3;
+            const particle = {
+                x: x,
+                y: y,
+                color: `hsl(${hue + Math.random() * 20 - 10}, 50%, 50%)`,
+                size: 2,
+                alpha: 1,
+                // 使用三角函数计算速度，创造更自然的圆形扩散效果
+                velocity: {
+                    x: Math.cos(angle) * speed,
+                    y: Math.sin(angle) * speed
+                },
+                gravity: 0.05,
+                drag: 0.98
+            };
+            this.particles.push(particle);
+        }
+    }
+
+    // 动画循环
+    animate() {
+        // 创建渐变的清除效果
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // 更新烟花弹
+        this.rockets.forEach((rocket, index) => {
+            rocket.y -= this.ROCKET_SPEED;
+            
+            // 添加尾迹效果
+            rocket.trail.push({x: rocket.x, y: rocket.y, alpha: 1});
+            
+            // 绘制尾迹
+            rocket.trail.forEach((point, i) => {
+                this.ctx.beginPath();
+                this.ctx.arc(point.x, point.y, 1, 0, Math.PI * 2);
+                this.ctx.fillStyle = `hsla(${rocket.color.match(/\d+/)[0]}, 50%, 50%, ${point.alpha})`;
+                this.ctx.fill();
+                point.alpha -= 0.05;
+            });
+            
+            // 清理消失的尾迹点
+            rocket.trail = rocket.trail.filter(point => point.alpha > 0);
+
+            // 绘制烟花弹
+            this.ctx.beginPath();
+            this.ctx.arc(rocket.x, rocket.y, rocket.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = rocket.color;
+            this.ctx.fill();
+
+            // 到达目标高度时爆炸
+            if(rocket.y <= rocket.targetY) {
+                this.createExplosion(rocket.x, rocket.y, rocket.color);
+                this.rockets.splice(index, 1);
+            }
+        });
+
+        // 更新粒子
+        this.particles.forEach((particle, index) => {
+            // 应用重力和阻力
+            particle.velocity.y += particle.gravity;
+            particle.velocity.x *= particle.drag;
+            particle.velocity.y *= particle.drag;
+            
+            particle.x += particle.velocity.x;
+            particle.y += particle.velocity.y;
+            particle.alpha -= this.PARTICLE_DECAY;
+            
+            // 绘制粒子
+            this.ctx.beginPath();
+            this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = particle.color.replace('hsl', 'hsla').replace(')', `,${particle.alpha})`);
+            this.ctx.fill();
+
+            // 移除消失的粒子
+            if(particle.alpha <= 0) {
+                this.particles.splice(index, 1);
+            }
+        });
+
+        requestAnimationFrame(() => this.animate());
+    }
+}
+
+// 创建画布并启动烟花效果
+const canvas = document.createElement('canvas');
+document.body.appendChild(canvas);
+new Firework(canvas);
+</script>
+</body>
+</html>
