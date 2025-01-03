@@ -24,12 +24,88 @@ class Firework {
         this.rockets = [];   // 烟花弹
         
         // 配置参数
-        this.PARTICLE_COUNT = 100;  // 每个烟花的粒子数
-        this.ROCKET_SPEED = 2;      // 烟花弹上升速度
-        this.PARTICLE_DECAY = 0.02; // 粒子消失速度
-        this.AUTO_LAUNCH_INTERVAL = 800; // 自动发射间隔(毫秒)，改为更短的间隔
+        this.PARTICLE_COUNT = 200;   // 增加粒子数量
+        this.ROCKET_SPEED = 5;      // 烟花弹上升速度
+        this.PARTICLE_DECAY = 0.01; // 降低粒子消失速度
+        this.AUTO_LAUNCH_INTERVAL = 2000; // 自动发射间隔(毫秒)
+        
+        // 添加文字烟花的点阵数据
+        this.textPoints = {
+            '王': [
+                [0,0,1,1,1,0,0],
+                [0,0,1,0,1,0,0],
+                [1,1,1,1,1,1,1],
+                [0,0,1,0,1,0,0],
+                [0,1,1,0,1,1,0],
+                [1,0,1,0,1,0,1],
+                [0,0,1,1,1,0,0]
+            ],
+            '倩': [
+                [1,0,1,0,1,0,1],
+                [0,1,1,1,1,1,0],
+                [1,0,1,0,1,0,1],
+                [0,1,1,1,1,1,0],
+                [1,0,1,0,1,0,1],
+                [0,1,0,1,0,1,0],
+                [1,0,1,0,1,0,1]
+            ]
+        };
         
         this.init();
+    }
+
+    // 添加创建文字烟花的方法
+    createTextFireworks() {
+        const centerX = this.canvas.width * 0.5;  // 画布中心X
+        const centerY = this.canvas.height * 0.4;  // 画布中心Y偏上
+        const scale = 30;  // 点阵缩放比例
+        const spacing = 250;  // 字间距
+        const targetY = centerY;  // 目标高度固定
+        const startDelay = 50;  // 发射延迟时间（毫秒）
+        let rocketCount = 0;  // 计算需要发射的烟花数量
+
+        // 计算第一个字的起始X坐标（居中）
+        const firstCharWidth = this.textPoints['王'][0].length * scale;
+        const totalWidth = firstCharWidth + spacing + this.textPoints['倩'][0].length * scale;
+        const startX = centerX - totalWidth / 2;
+
+        // 创建"王"字的烟花
+        this.textPoints['王'].forEach((row, i) => {
+            row.forEach((point, j) => {
+                if (point === 1) {
+                    const x = startX + j * scale;
+                    setTimeout(() => {
+                        this.launchRocket(x, targetY + i * scale, true);
+                    }, startDelay * rocketCount++);
+                }
+            });
+        });
+
+        // 创建"倩"字的烟花
+        this.textPoints['倩'].forEach((row, i) => {
+            row.forEach((point, j) => {
+                if (point === 1) {
+                    const x = startX + spacing + j * scale;
+                    setTimeout(() => {
+                        this.launchRocket(x, targetY + i * scale, true);
+                    }, startDelay * rocketCount++);
+                }
+            });
+        });
+    }
+
+    // 修改发射烟花弹的方法
+    launchRocket(x, targetY = null, isText = false) {
+        const rocket = {
+            x: x,
+            y: this.canvas.height,
+            targetY: targetY || (this.canvas.height * 0.2 + Math.random() * this.canvas.height * 0.3),
+            color: isText ? `hsl(${Math.random() * 60 + 300}, 80%, 60%)` : `hsl(${Math.random() * 360}, 50%, 50%)`, // 文字烟花使用紫色系
+            size: 2,
+            trail: [],
+            isText: isText  // 标记是否为文字烟花
+        };
+        this.rockets.push(rocket);
     }
 
     init() {
@@ -39,14 +115,14 @@ class Firework {
         // 监听窗口大小变化
         window.addEventListener('resize', () => this.resizeCanvas());
         
-        // 监听点击事件发射烟花
+        // 监听点击事件发射文字烟花
         this.canvas.addEventListener('click', (e) => {
-            this.launchRocket(e.clientX);
+            this.createTextFireworks();
         });
 
         // 自动发射烟花
         setInterval(() => {
-            if (Math.random() < 0.8) { // 提高发射概率到80%
+            if (Math.random() < 0.8) {
                 this.launchRocket(Math.random() * this.canvas.width);
             }
         }, this.AUTO_LAUNCH_INTERVAL);
@@ -60,40 +136,60 @@ class Firework {
         this.canvas.height = window.innerHeight;
     }
 
-    // 发射烟花弹
-    launchRocket(x) {
-        const rocket = {
-            x: x,
-            y: this.canvas.height,
-            targetY: this.canvas.height * 0.2 + Math.random() * this.canvas.height * 0.3,
-            color: `hsl(${Math.random() * 360}, 50%, 50%)`,
-            size: 2,
-            trail: [] // 添加尾迹数组
-        };
-        this.rockets.push(rocket);
-    }
-
-    // 创建爆炸效果
-    createExplosion(x, y, color) {
-        const hue = parseInt(color.match(/\d+/)[0]); // 提取色相值
-        for(let i = 0; i < this.PARTICLE_COUNT; i++) {
-            const angle = (Math.PI * 2 / this.PARTICLE_COUNT) * i;
-            const speed = 1 + Math.random() * 3;
-            const particle = {
-                x: x,
-                y: y,
-                color: `hsl(${hue + Math.random() * 20 - 10}, 50%, 50%)`,
-                size: 2,
-                alpha: 1,
-                // 使用三角函数计算速度，创造更自然的圆形扩散效果
-                velocity: {
-                    x: Math.cos(angle) * speed,
-                    y: Math.sin(angle) * speed
-                },
-                gravity: 0.05,
-                drag: 0.98
-            };
-            this.particles.push(particle);
+    // 修改爆炸效果
+    createExplosion(x, y, color, isText) {
+        const hue = parseInt(color.match(/\d+/)[0]);
+        const particleCount = isText ? this.PARTICLE_COUNT : this.PARTICLE_COUNT / 2;
+        
+        if (isText) {
+            // 文字烟花：先散开，后聚合
+            for(let i = 0; i < particleCount; i++) {
+                const angle = (Math.PI * 2 / particleCount) * i;
+                const speed = 3 + Math.random() * 3; // 增加初始扩散速度
+                const radius = 2; // 初始爆炸半径
+                
+                const particle = {
+                    x: x,
+                    y: y,
+                    targetX: x, // 保存目标位置
+                    targetY: y,
+                    color: `hsl(${hue + Math.random() * 20 - 10}, 80%, 60%)`,
+                    size: 3,
+                    alpha: 1,
+                    // 初始速度向外扩散
+                    velocity: {
+                        x: Math.cos(angle) * speed,
+                        y: Math.sin(angle) * speed
+                    },
+                    gravity: 0.02,
+                    drag: 0.98,
+                    isText: true,
+                    phase: 'explode', // 添加阶段标记：explode 或 text
+                    delay: 30 + Math.random() * 30 // 添加延迟，使粒子在不同时间开始聚合
+                };
+                this.particles.push(particle);
+            }
+        } else {
+            // 普通烟花：随机扩散
+            for(let i = 0; i < particleCount; i++) {
+                const angle = (Math.PI * 2 / particleCount) * i;
+                const speed = 2 + Math.random() * 3;
+                const particle = {
+                    x: x,
+                    y: y,
+                    color: `hsl(${hue + Math.random() * 20 - 10}, 50%, 50%)`,
+                    size: 2,
+                    alpha: 1,
+                    velocity: {
+                        x: Math.cos(angle) * speed,
+                        y: Math.sin(angle) * speed
+                    },
+                    gravity: 0.1,
+                    drag: 0.98,
+                    isText: false
+                };
+                this.particles.push(particle);
+            }
         }
     }
 
@@ -130,21 +226,52 @@ class Firework {
 
             // 到达目标高度时爆炸
             if(rocket.y <= rocket.targetY) {
-                this.createExplosion(rocket.x, rocket.y, rocket.color);
+                this.createExplosion(rocket.x, rocket.y, rocket.color, rocket.isText);
                 this.rockets.splice(index, 1);
             }
         });
 
         // 更新粒子
         this.particles.forEach((particle, index) => {
-            // 应用重力和阻力
-            particle.velocity.y += particle.gravity;
-            particle.velocity.x *= particle.drag;
-            particle.velocity.y *= particle.drag;
-            
-            particle.x += particle.velocity.x;
-            particle.y += particle.velocity.y;
-            particle.alpha -= this.PARTICLE_DECAY;
+            if (particle.isText) {
+                if (particle.phase === 'explode') {
+                    // 爆炸阶段：应用重力和阻力
+                    particle.velocity.y += particle.gravity;
+                    particle.velocity.x *= particle.drag;
+                    particle.velocity.y *= particle.drag;
+                    
+                    // 当速度降低且延迟结束后，切换到文字阶段
+                    if (particle.delay <= 0 && 
+                        Math.abs(particle.velocity.x) < 0.5 && 
+                        Math.abs(particle.velocity.y) < 0.5) {
+                        particle.phase = 'text';
+                        // 设置新的目标位置，形成文字
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = 50 + Math.random() * 50;
+                        particle.targetX = particle.x + Math.cos(angle) * distance;
+                        particle.targetY = particle.y + Math.sin(angle) * distance;
+                    }
+                    particle.delay--;
+                } else {
+                    // 文字阶段：移动到目标位置
+                    const dx = particle.targetX - particle.x;
+                    const dy = particle.targetY - particle.y;
+                    particle.velocity.x = dx * 0.08;
+                    particle.velocity.y = dy * 0.08;
+                }
+                
+                particle.x += particle.velocity.x;
+                particle.y += particle.velocity.y;
+                particle.alpha -= particle.phase === 'text' ? this.PARTICLE_DECAY * 0.5 : this.PARTICLE_DECAY;
+            } else {
+                // 普通粒子的更新逻辑保持不变
+                particle.velocity.y += particle.gravity;
+                particle.velocity.x *= particle.drag;
+                particle.velocity.y *= particle.drag;
+                particle.x += particle.velocity.x;
+                particle.y += particle.velocity.y;
+                particle.alpha -= this.PARTICLE_DECAY;
+            }
             
             // 绘制粒子
             this.ctx.beginPath();
