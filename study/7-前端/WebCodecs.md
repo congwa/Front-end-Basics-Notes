@@ -24,6 +24,11 @@ ffmpeg不易将中间产物进行预览。如果将预览和导出的编辑分�
 
 两种不同的H264格式，详见[Annex-B与 AVCC](https://zhuanlan.zhihu.com/p/347039175)
 
+
+## 工具联想
+
+使用WebCodecs，可实现一个视频下载工具
+
 ## 开源项目参考
 
 - [WebAV 是 Web 平台上创建/编辑视频文件的 SDK，基于 WebCodecs 构建](https://github.com/bilibili/WebAV)
