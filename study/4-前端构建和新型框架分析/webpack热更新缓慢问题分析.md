@@ -35,6 +35,11 @@ TODO: webpack热更新缓慢问题分析
 
 
 
+## 业内的解决方案(umi js的MFSU)
+
+既然在多数项目中，Webpack 在处理依赖模块（node_modules）的耗时远大于项目代码，那么我们可以将来自 node_modules 的模块使用 ESBuild/SWC 等巨快的构建工具构建后提供给 Webpack 消费，这里也就需要配合 Webpack5 的新特性 Module Federation 来连接彼此
+
 ## 参考资料
 
 [coco大佬的-前端构建效率优化之路](https://zhuanlan.zhihu.com/p/548881329)
+[MFSU 是如何做的？](https://juejin.cn/post/7160875688260534279)
