@@ -4,7 +4,7 @@ Web Codecs是浏览器提供的一套音视频编解码的API。相比较于我�
 
 ## 为什么用`WebCodecs`而不用`ffmpeg`
 
-ffmpeg不易将中间产物进行预览。如果将预览和导出的编辑分开，又不能确保所见即所得.
+ffmpeg不易将中间产物进行预览。如果将预览和导出的编辑分开，又不能确保所见即所得.在浏览器提供解封装能力
 
 ## 编码与封装
 
@@ -35,4 +35,8 @@ ffmpeg不易将中间产物进行预览。如果将预览和导出的编辑分�
   - 高性能：是 ffmpeg.wasm 的 20 倍， 体积小：约 50kb（MINIFIED + GZIPPED, 未 tree-shaking
   - 批量音视频文件处理；如：添加水印、配音、嵌入字幕
   - 构建音视频相关产品；如：视频剪辑、直播推流、视频动画制作
+  - 兼容 chrome 102+
+- [WASM 助力 WebCodecs：填补解封装能力的空白](https://juejin.cn/post/7443806845573955603)
+- [web-demuxer](https://github.com/bilibili/web-demuxer)
+  - 解封装
   - 兼容 chrome 102+
