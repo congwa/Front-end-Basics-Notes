@@ -69,3 +69,11 @@ export default withKeepAlive(MyComponent);
 
 [https://www.npmjs.com/package/react-keep-alive](https://www.npmjs.com/package/react-keep-alive)
 React.createPortal API 完成任意组件的keep-alive组件包裹
+
+[Activity](https://juejin.cn/post/7312304122535149604)
+
+## 总结
+
+- router下自己记录位置再还原
+- 组件级别的可以使用Suspense为核心的[插件](https://github.com/kylvia/Activity) [插件2](https://github.com/IVLIU/react-offscreen)
+
