@@ -76,3 +76,12 @@ poetry install
 # 如果运行 poetry install 时已经存在 poetry.lock 文件和 pyproject.toml 文件，则意味着您运行了 install 命令之前，或者项目中的其他人运行了 install 命令并将 poetry.lock 文件提交到项目中
 
 ```
+
+## 从requirements.txt中添加依赖
+
+```sh
+# 从requirements.txt中添加依赖
+poetry add $(cat requirements.txt)
+# 从pyproject.toml中导出依赖
+poetry export -f requirements.txt --output requirements.txt
+```

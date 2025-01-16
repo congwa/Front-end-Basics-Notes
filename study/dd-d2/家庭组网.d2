@@ -1,0 +1,57 @@
+# 定义样式
+direction: right
+
+# 网络设备
+internet: 因特网 {
+  shape: cloud
+}
+
+modem: 光猫 {
+  shape: rectangle
+  style.stroke-dash: 3
+}
+
+router: 路由器（j1900软路由） {
+  shape: rectangle
+  style.stroke-dash: 3
+}
+
+ap: AP模式 {
+  shape: rectangle
+  style.stroke-dash: 3
+}
+
+repeater: 分身设备 {
+  shape: rectangle
+  style.stroke-dash: 3
+}
+
+# 连接关系
+internet -> modem: WAN -> LAN
+modem -> router: WAN -> LAN
+router -> ap: 有线 {
+  label: "WAN\nLAN\n都行"
+}
+ap -> repeater: 无线回程（无线mesh） {
+  style.stroke-dash: 3
+}
+
+# 注释说明
+note: {
+  label: "如果光猫按号，路由器就DHCP；\n如果光猫桥接，则路由器直接拨号"
+  style.fill: "#FFFACD"
+  style.stroke: "#FFE4B5"
+  style.multiple: true
+  style.opacity: 0.9
+  direction: right
+}
+
+
+device_note: {
+  label: "设备型号：\小米BE3600Pro\n分身设备：小米BE3600Pro"
+  style.fill: "#E6E6FA"
+  style.stroke: "#B0C4DE"
+  style.multiple: true
+  style.opacity: 0.9
+  direction: right
+}
