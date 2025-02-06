@@ -137,3 +137,35 @@ context = await state_manager.get_context(
 - 提供智能化的代码查询
 - 支持复杂的依赖分析
 - 帮助理解代码结构
+
+
+## 补充
+
+### 1. 在vue2项目中
+```py
+graph_rag = GraphRAG(
+    working_dir="./vue2_project",
+    domain="Vue2项目代码分析",
+    example_queries="""
+        组件 UserProfile 使用了哪些子组件？
+        Vuex store 中的 mutations 被哪些组件调用？
+        路由 /dashboard 关联了哪些组件？
+        组件 DataTable 使用了哪些 mixins？
+        哪些组件注册了 beforeDestroy 生命周期钩子？
+    """,
+    entity_types=[
+        "Component",      # Vue组件
+        "Method",         # 组件方法
+        "Prop",          # 组件属性
+        "Data",          # 组件数据
+        "Computed",      # 计算属性
+        "Watch",         # 侦听器
+        "Mixin",         # 混入
+        "Directive",     # 指令
+        "Filter",        # 过滤器
+        "Store",         # Vuex存储
+        "Route",         # 路由配置
+        "Hook"          # 生命周期钩子
+    ]
+)
+```
