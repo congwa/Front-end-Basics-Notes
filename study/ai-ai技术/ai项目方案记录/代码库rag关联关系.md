@@ -169,3 +169,111 @@ graph_rag = GraphRAG(
     ]
 )
 ```
+
+### 补充解释
+
+让我解释一下这两个参数的作用：
+
+1. **example_queries 的作用**
+
+`example_queries` 用于为 LLM 提供示例查询，帮助 LLM 理解如何提取实体和关系。在 <mcfile name="_prompt.py" path="/Users/cong/Downloads/fast-graphrag-main/fast_graphrag/_prompt.py"></mcfile> 中的提示模板中：
+
+```python
+PROMPTS["entity_relationship_extraction"] = """# DOMAIN PROMPT
+{domain}
+
+# GOAL
+Your goal is to highlight information that is relevant to the domain and the questions that may be asked on it.
+
+Examples of possible questions:
+{example_queries}  # 这里插入示例查询
+
+# STEPS
+1. Identify all entities of the given types...
+"""
+```
+
+示例用法：
+```python
+example_queries = """
+哪些函数调用了数据库操作？
+类 A 和类 B 之间是什么关系？
+模块 X 依赖于哪些其他模块？
+"""
+```
+
+这些示例查询帮助 LLM：
+- 理解需要提取的信息类型
+- 确定实体间关系的重要性
+- 指导信息提取的方向
+
+2. **entity_types 的作用**
+
+`entity_types` 定义了需要从文本中提取的实体类型。在代码处理中，常见的实体类型包括：
+
+```python
+entity_types = [
+    "Function",    # 函数
+    "Class",       # 类
+    "Module",      # 模块
+    "Variable",    # 变量
+    "Interface",   # 接口
+    "Package"      # 包
+]
+```
+
+entity_types 的使用体现在两个地方：
+
+1. 提示模板中：
+```python
+# INPUT DATA
+Types: {entity_types}  # 转换为逗号分隔的字符串
+Document: {input_text}
+```
+
+2. 实体提取过程中的类型验证：
+```python
+# 在 DefaultInformationExtractionService 中
+_clean_entity_types = [re.sub("[ _]", "", entity_type).upper() for entity_type in entity_types]
+for entity in chunk_graph.entities:
+    if re.sub("[ _]", "", entity.type).upper() not in _clean_entity_types:
+        entity.type = "UNKNOWN"
+```
+
+这两个参数的协同作用：
+
+1. **信息提取精确性**：
+   - example_queries 指导提取方向
+   - entity_types 限定提取范围
+
+2. **关系构建完整性**：
+   - example_queries 展示关系类型
+   - entity_types 确保实体类型正确
+
+3. **查询效果优化**：
+   - example_queries 提供查询模式
+   - entity_types 保证实体分类
+
+使用示例：
+```python
+graph_rag = GraphRAG(
+    working_dir="./workspace",
+    domain="Python代码库分析",
+    example_queries="""
+        函数 process_data 调用了哪些其他函数？
+        类 DataProcessor 的继承关系是什么？
+        模块 utils 被哪些其他模块导入？
+    """,
+    entity_types=[
+        "Function",
+        "Class",
+        "Module",
+        "Variable"
+    ]
+)
+```
+
+这样的配置能够帮助系统：
+1. 准确识别代码中的关键实体
+2. 正确理解实体间的关系
+3. 提供更精准的查询响应
