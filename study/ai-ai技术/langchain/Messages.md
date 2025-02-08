@@ -1,4 +1,18 @@
-# aiMessages
+# messages core中
+
+langchain中提供了很多messages类，以供用户选择
+
+
+继承关系
+
+```sh
+BaseMessage --> SystemMessage, AIMessage, HumanMessage, ChatMessage, FunctionMessage, ToolMessage
+            --> BaseMessageChunk --> SystemMessageChunk, AIMessageChunk, HumanMessageChunk, ChatMessageChunk, FunctionMessageChunk, ToolMessageChunk
+```
+
+用于定义不同的角色，来区分不同的场景的消息
+
+## 1. aiMessages
 
 > 角色被固定，AIMessage（固定是 "ai"）或 HumanMessage（固定是 "human"）
 > 核心包里面的一个类，代表 AI 生成的消息，只是消息的一个数据结构，它本身不具备存储功能，必须结合 ChatMessageHistory 或数据库来持久化消息
