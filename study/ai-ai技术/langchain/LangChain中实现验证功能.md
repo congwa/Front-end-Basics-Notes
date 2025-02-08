@@ -5,6 +5,8 @@
 
 ## 1. 基础验证实现
 
+- 基础验证
+  
 ```python
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
@@ -37,6 +39,39 @@ try:
     print(result)  # 返回UserProfile对象
 except Exception as e:
     print(f"验证失败: {e}")
+```
+
+- **部分响应验证实现**
+
+```py
+from langchain.output_parsers import PydanticOutputParser
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from pydantic import BaseModel, Field
+from typing import Optional
+
+# 定义可选字段的模型
+class PartialUserProfile(BaseModel):
+    name: str  # 必填字段
+    age: Optional[int] = None  # 可选字段
+    email: Optional[str] = None  # 可选字段
+    bio: Optional[str] = None  # 可选字段
+
+# 创建解析器
+parser = PydanticOutputParser(pydantic_object=PartialUserProfile)
+
+# 使用示例
+prompt = PromptTemplate(
+    template="生成用户信息，只需要包含姓名和年龄。\n{format_instructions}",
+    input_variables=[],
+    partial_variables={"format_instructions": parser.get_format_instructions()}
+)
+
+# 创建链
+chain = prompt | ChatOpenAI() | parser
+
+# 执行
+result = chain.invoke({})
 ```
 
 ## 2. 复杂验证实现

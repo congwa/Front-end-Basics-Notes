@@ -82,6 +82,8 @@ client = instructor.patch(client, mode=Mode.MARKDOWN)
 client = instructor.patch(client, mode=Mode.TOOLS)
 ```
 
+> 注意： langchain提供了更多的解释器选择 https://python.langchain.com/api_reference/core/output_parsers.html
+
 ### 3.3 重试机制
 
 ```python
