@@ -1,5 +1,6 @@
 # aiMessages
 
+> 角色被固定，AIMessage（固定是 "ai"）或 HumanMessage（固定是 "human"）
 > 核心包里面的一个类，代表 AI 生成的消息，只是消息的一个数据结构，它本身不具备存储功能，必须结合 ChatMessageHistory 或数据库来持久化消息
 
 在 Web 服务中，通常的流程是：
