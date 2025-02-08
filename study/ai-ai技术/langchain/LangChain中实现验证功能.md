@@ -3,6 +3,8 @@
 
 在LangChain中实现类似的验证功能，主要通过`OutputParser`和`StructuredOutputParser`来实现。让我解释一下验证的实现方式：
 
+- https://python.langchain.com/api_reference/core/output_parsers.html langchain提供非常多的解析，主要以`PydanticOutputParser`为主
+  
 ## 1. 基础验证实现
 
 - 基础验证
