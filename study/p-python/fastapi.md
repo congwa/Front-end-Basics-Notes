@@ -376,4 +376,8 @@ class User(CustomBaseModel):  # 继承 CustomBaseModel 而不是 BaseModel
     username: str
     email: str
     age: int
+
+@app.post("/users/")
+async def create_user(user: User):
+    return user.model_dump() # 注意：现在这里一定是json模式
 ```
