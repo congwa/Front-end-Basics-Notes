@@ -129,3 +129,137 @@ if __name__ == "__main__":
 2. 实现权限继承的优先级控制
 3. 添加角色基础的访问控制（RBAC）
 4. 实现更细粒度的权限控制
+
+## 最终举例
+
+```py
+from enum import Flag, auto
+from typing import Dict, Set, List
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, sessionmaker
+
+Base = declarative_base()
+
+# 用户-组关联表（多对多关系）
+user_groups = Table(
+    'user_groups', 
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('group_id', Integer, ForeignKey('groups.id'))
+)
+
+class Permission(Flag):
+    NONE = 0
+    READ = auto()
+    WRITE = auto()
+    EXECUTE = auto()
+    ADMIN = auto()
+    
+    READ_WRITE = READ | WRITE
+    FULL = READ | WRITE | EXECUTE | ADMIN
+
+# 数据库模型定义
+class User(Base):
+    __tablename__ = 'users'
+    
+    id = Column(Integer, primary_key=True)
+    username = Column(String(50), unique=True, nullable=False)
+    direct_permission = Column(Integer, default=0)  # 存储权限的整数值
+    
+    # 关联关系
+    groups = relationship('Group', secondary=user_groups, back_populates='users')
+
+class Group(Base):
+    __tablename__ = 'groups'
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), unique=True, nullable=False)
+    permission = Column(Integer, default=0)  # 存储权限的整数值
+    
+    # 关联关系
+    users = relationship('User', secondary=user_groups, back_populates='groups')
+
+class ACLDB:
+    def __init__(self, db_url='sqlite:///acl.db'):
+        self.engine = create_engine(db_url)
+        Base.metadata.create_all(self.engine)
+        Session = sessionmaker(bind=self.engine)
+        self.session = Session()
+    
+    def add_user(self, username: str) -> User:
+        user = User(username=username)
+        self.session.add(user)
+        self.session.commit()
+        return user
+    
+    def add_group(self, group_name: str) -> Group:
+        group = Group(name=group_name)
+        self.session.add(group)
+        self.session.commit()
+        return group
+    
+    def add_user_to_group(self, username: str, group_name: str):
+        user = self.session.query(User).filter_by(username=username).first()
+        group = self.session.query(Group).filter_by(name=group_name).first()
+        if user and group:
+            user.groups.append(group)
+            self.session.commit()
+    
+    def set_user_permission(self, username: str, permission: Permission):
+        user = self.session.query(User).filter_by(username=username).first()
+        if user:
+            user.direct_permission = permission.value
+            self.session.commit()
+    
+    def set_group_permission(self, group_name: str, permission: Permission):
+        group = self.session.query(Group).filter_by(name=group_name).first()
+        if group:
+            group.permission = permission.value
+            self.session.commit()
+    
+    def get_effective_permission(self, username: str) -> Permission:
+        user = self.session.query(User).filter_by(username=username).first()
+        if not user:
+            return Permission.NONE
+            
+        # 获取用户直接权限
+        effective_permission = Permission(user.direct_permission)
+        
+        # 合并用户所属组的权限
+        for group in user.groups:
+            group_permission = Permission(group.permission)
+            effective_permission |= group_permission
+            
+        return effective_permission
+
+# 使用示例
+def main():
+    acl = ACLDB()
+    
+    # 创建用户和组
+    acl.add_user("alice")
+    acl.add_user("bob")
+    acl.add_group("developers")
+    acl.add_group("admins")
+    
+    # 设置权限
+    acl.set_group_permission("developers", Permission.READ_WRITE)
+    acl.set_group_permission("admins", Permission.FULL)
+    acl.set_user_permission("alice", Permission.EXECUTE)
+    
+    # 添加用户到组
+    acl.add_user_to_group("alice", "developers")
+    acl.add_user_to_group("bob", "developers")
+    acl.add_user_to_group("bob", "admins")
+    
+    # 检查权限
+    alice_permission = acl.get_effective_permission("alice")
+    bob_permission = acl.get_effective_permission("bob")
+    
+    print(f"Alice's permissions: {alice_permission}")
+    print(f"Bob's permissions: {bob_permission}")
+
+if __name__ == "__main__":
+    main()
+```
