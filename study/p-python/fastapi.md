@@ -381,3 +381,75 @@ class User(CustomBaseModel):  # 继承 CustomBaseModel 而不是 BaseModel
 async def create_user(user: User):
     return user.model_dump() # 注意：现在这里一定是json模式
 ```
+
+##  SQLAlchemy ORM 模型转换到 Pydantic 模型的两种主要方式：
+
+### 1. orm_mode/from_orm 方式（Pydantic v1 风格）
+
+```python
+class UserModel(BaseModel):
+    id: int
+    name: str
+    
+    class Config:
+        orm_mode = True
+
+# 使用方式
+user_model = UserModel.from_orm(db_user)
+```
+
+特点：
+
+- 传统方式，向后兼容性好
+- 配置较为简单
+- 适合 Pydantic v1 版本
+- 性能相对较低
+
+### 2. model_validate 方式（Pydantic v2 风格）
+
+```python
+class UserModel(BaseModel):
+    id: int
+    name: str
+    
+    # from_attributes 定义了从orm模型获取属性的方式
+    model_config = ConfigDict(from_attributes=True)
+
+    # 当 from_attributes=False 时（默认）
+    user = UserModel.model_validate(db_user.__dict__)  # 需要转换为字典
+
+# 使用方式
+user_model = UserModel.model_validate(db_user)
+```
+
+特点：
+
+- Pydantic v2 推荐方式
+- 性能更优（比 v1 快约 50%）
+- 类型提示更完善
+- 错误处理更强大
+- 配置更灵活
+
+### 主要区别：
+
+1. **性能表现**：
+   - `model_validate` 性能明显优于 `from_orm`
+   - 特别是在处理大量数据时差异更明显
+
+2. **语法风格**：
+   - `from_orm`: 使用内部 Config 类配置
+   - `model_validate`: 使用 model_config 类变量配置
+
+3. **错误处理**：
+   - `model_validate` 提供更详细的验证错误信息
+   - 错误追踪更容易
+
+4. **使用场景**：
+   - `from_orm`: 适合旧项目或需要兼容性的场景
+   - `model_validate`: 适合新项目或性能要求高的场景
+
+### 建议：
+
+1. **新项目选择**：
+   - 优先使用 `model_validate`
+   - 采用 Pydantic v2 的新特性
