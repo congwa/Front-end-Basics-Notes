@@ -1,200 +1,85 @@
 # 图谱RAG (Microsoft GraphRAG)
 
-> 🏷️ 技术分类: 架构创新
-> 
-> 🔗 相关技术: 知识图谱增强检索、自适应检索、多模态检索
 
 ## 技术概述
 
-GraphRAG是Microsoft提出的一种将知识图谱与RAG系统深度集成的创新架构,通过实体关系分析和社区检测来增强检索效果。
+通过从文本单元中提取实体和关系来分析输入语料库。自下而上生成每个社区及其组成部分的摘要
 
-## 应用场景
+知识图谱生成：以实体为节点、关系为边构建图。社区检测：在图中识别相关实体的集群。总结：为每个社区生成摘要以提供上下文信息LLMs。查询处理：利用这些摘要增强LLM回答复杂问题的能力。
 
-- 🔬 复杂知识推理
-- 📊 多源信息融合
-- 🎯 精确实体检索
-- 🔄 关系网络分析
+文本切分：将源文本划分为可管理的片段。元素提取：使用LLMs来识别实体和关系。图构建：从提取的元素构建图。社区检测：应用 Leiden 等算法来发现社区。社区总结：为每个社区创建摘要。
 
-## 详细实现
+本地答案生成：使用社区摘要生成初步答案。全局答案综合：结合本地答案形成综合回应。
 
-```python
-class GraphRAG:
-    def __init__(
-        self,
-        text_processor,      # 文本处理器
-        entity_extractor,    # 实体抽取器
-        graph_builder,       # 图谱构建器
-        community_detector   # 社区检测器
-    ):
-        self.text_processor = text_processor
-        self.entity_extractor = entity_extractor
-        self.graph_builder = graph_builder
-        self.community_detector = community_detector
-        self.knowledge_graph = None
-        
-    def process_corpus(
-        self,
-        documents: List[Document]
-    ) -> Tuple[nx.Graph, Dict]:
-        """
-        处理文档集合并构建知识图谱
-        Args:
-            documents: 输入文档列表
-        Returns:
-            knowledge_graph: 构建的知识图谱
-            summaries: 社区摘要信息
-        """
-        # 1. 文本单元分析
-        text_units = self.text_processor.process(
-            documents,
-            preserve_structure=True  # 保留文档结构
-        )
-        
-        # 2. 实体和关系提取
-        entities_relations = self.entity_extractor.extract(
-            text_units,
-            confidence_threshold=0.85  # 设置置信度阈值
-        )
-        
-        # 3. 构建知识图谱
-        self.knowledge_graph = self.graph_builder.build(
-            entities_relations,
-            add_metadata=True  # 添加元数据
-        )
-        
-        # 4. 社区检测和总结
-        communities = self.community_detector.detect(
-            self.knowledge_graph,
-            resolution=1.0  # 社区粒度参数
-        )
-        summaries = self._generate_community_summaries(communities)
-        
-        return self.knowledge_graph, summaries
-        
-    def retrieve(
-        self,
-        query: str,
-        top_k: int = 5
-    ) -> List[Document]:
-        """
-        基于知识图谱的检索
-        """
-        # 1. 查询实体识别
-        query_entities = self.entity_extractor.extract_from_query(query)
-        
-        # 2. 子图检索
-        relevant_subgraphs = self._retrieve_relevant_subgraphs(
-            query_entities)
-            
-        # 3. 路径分析
-        knowledge_paths = self._analyze_paths(
-            query_entities, relevant_subgraphs)
-            
-        # 4. 文档重排序
-        ranked_docs = self._rank_with_graph_context(
-            query, knowledge_paths)
-            
-        return ranked_docs[:top_k]
+## 传统rag的不足之处
+
+检索增强生成（RAG）通常通过分块长文本、为每个分块创建文本嵌入，并根据与查询的相似性搜索检索分块以包含在生成上下文中，来实现。这种方法在许多场景中表现良好，且在吸引人的速度和成本权衡下运行，但在需要对文本有详细理解的场景中并不总是表现良好。
+
+
+使用 GraphRag 进行索引是一个更耗时的过程，成本也更高，因为除了计算嵌入外，GraphRag 还会进行许多 LLM 调用来分析文本、提取实体并构建图。不过这是一次性的开销。
+
+GraphRag 有一套方便的命令行界面命令我们可以使用。我们将首先配置系统，然后运行索引操作
+
+```sh
+import yaml
+
+if not os.path.exists('data/graphrag'):
+    !python -m graphrag.index --init --root data/graphrag
+
+with open('data/graphrag/settings.yaml', 'r') as f:
+    settings_yaml = yaml.load(f, Loader=yaml.FullLoader)
+settings_yaml['llm']['model'] = "gpt-4o"
+settings_yaml['llm']['api_key'] = AZURE_OPENAI_API_KEY if AZURE else OPENAI_API_KEY
+settings_yaml['llm']['type'] = 'azure_openai_chat' if AZURE else 'openai_chat'
+settings_yaml['embeddings']['llm']['api_key'] = AZURE_OPENAI_API_KEY if AZURE else OPENAI_API_KEY
+settings_yaml['embeddings']['llm']['type'] = 'azure_openai_embedding' if AZURE else 'openai_embedding'
+settings_yaml['embeddings']['llm']['model'] = TEXT_EMBEDDING_3_LARGE_NAME if AZURE else 'text-embedding-3-large'
+if AZURE:
+    settings_yaml['llm']['api_version'] = AZURE_OPENAI_API_VERSION
+    settings_yaml['llm']['deployment_name'] = GPT4O_DEPLOYMENT_NAME
+    settings_yaml['llm']['api_base'] = AZURE_OPENAI_ENDPOINT
+    settings_yaml['embeddings']['llm']['api_version'] = AZURE_OPENAI_API_VERSION
+    settings_yaml['embeddings']['llm']['deployment_name'] = TEXT_EMBEDDING_3_LARGE_NAME
+    settings_yaml['embeddings']['llm']['api_base'] = AZURE_OPENAI_ENDPOINT
+
+with open('data/graphrag/settings.yaml', 'w') as f:
+    yaml.dump(settings_yaml, f)
+
+## 使用命令直接运行 graphrag
+if not os.path.exists('data/graphrag/input'):
+    os.makedirs('data/graphrag/input')
+    !cp data/elon.md data/graphrag/input/elon.txt
+    !python -m graphrag.index --root ./data/graphrag
+
+import subprocess
+import re
+DEFAULT_RESPONSE_TYPE = 'Summarize and explain in 1-2 paragraphs with bullet points using at most 300 tokens'
+DEFAULT_MAX_CONTEXT_TOKENS = 10000
+
+def remove_data(text):
+    return re.sub(r'\[Data:.*?\]', '', text).strip()
+
+
+def ask_graph(query,method):
+    env = os.environ.copy() | {
+      'GRAPHRAG_GLOBAL_SEARCH_MAX_TOKENS': str(DEFAULT_MAX_CONTEXT_TOKENS),
+    }
+    command = [
+      'python', '-m', 'graphrag.query',
+      '--root', './data/graphrag',
+      '--method', method,
+      '--response_type', DEFAULT_RESPONSE_TYPE,
+      query,
+    ]
+    output = subprocess.check_output(command, universal_newlines=True, env=env, stderr=subprocess.DEVNULL)
+    return remove_data(output.split('Search Response: ')[1])
 ```
 
-## 优化策略
+1. 全局搜索通过利用社区摘要来推理关于整个语料库的综合问题。
+2. 通过扩展到其邻居及其相关概念来进行特定实体的推理搜索。
 
-1. 社区检测优化
-```python
-class CommunityDetector:
-    def detect_communities(
-        self,
-        graph: nx.Graph,
-        algorithm: str = 'louvain'
-    ) -> List[Set]:
-        """
-        使用多种算法检测社区
-        """
-        if algorithm == 'louvain':
-            communities = self._detect_with_louvain(graph)
-        elif algorithm == 'infomap':
-            communities = self._detect_with_infomap(graph)
-        else:
-            communities = self._detect_with_leiden(graph)
-            
-        # 后处理优化
-        refined_communities = self._refine_communities(
-            communities,
-            min_size=3  # 最小社区大小
-        )
-        
-        return refined_communities
-```
+## 社区其他的graphRag的方案
 
-## 实现效果
-
-| 指标 | GraphRAG | 传统RAG | 改进 |
-|------|----------|---------|------|
-| 知识完整性 | 92% | 78% | +14% |
-| 关系准确率 | 89% | 65% | +24% |
-| 推理能力 | 高 | 中 | 显著提升 |
-| 查询延迟 | 2.5s | 1.5s | +1.0s |
-
-## 最佳实践
-
-1. 图谱构建
-   - 使用高质量的实体识别模型
-   - 设置合适的关系置信度阈值
-   - 定期更新和维护图谱
-
-2. 检索优化
-   - 实现图谱剪枝策略
-   - 使用多跳推理
-   - 缓存常用子图
-
-3. 性能调优
-   - 使用图数据库存储
-   - 实现并行处理
-   - 优化内存使用
-
-## 使用示例
-
-```python
-# 初始化GraphRAG系统
-graph_rag = GraphRAG(
-    text_processor=TextProcessor(),
-    entity_extractor=EntityExtractor(model="bert-large"),
-    graph_builder=GraphBuilder(backend="networkx"),
-    community_detector=CommunityDetector()
-)
-
-# 处理文档集合
-documents = load_documents("knowledge_base/")
-knowledge_graph, summaries = graph_rag.process_corpus(documents)
-
-# 查询示例
-query = "谁是AlphaGo的主要开发者,他们还开发了什么?"
-results = graph_rag.retrieve(query)
-
-# 分析知识图谱
-nx.draw(knowledge_graph, with_labels=True)
-plt.show()
-```
-
-## 注意事项
-
-1. 图谱规模控制
-   - 及时清理无用节点和边
-   - 设置合理的图谱深度
-   - 监控内存使用
-
-2. 实体消歧
-   - 实现实体链接
-   - 处理同义词和别名
-   - 考虑上下文信息
-
-3. 性能优化
-   - 使用异步处理
-   - 实现查询缓存
-   - 优化图算法
-
-## 扩展阅读
-
-- [Microsoft GraphRAG论文](https://arxiv.org/abs/xxx)
-- [知识图谱构建指南](https://example.com)
-- [图神经网络教程](https://example.com) 
+- [fast_graphrag](https://github.com/circlemind-ai/fast-graphrag)
+> 通过预先定义好的关系来提取文本中的有限实体，同时分析实体之间的关系和描述，在一次交互中总结出 实体 关系描述 的关系，根据此进行关系的图嵌入， 这样的方式在嵌入的时候可以节省很多token， 在使用的时候要自己先定义出类型来(类型类似于社区的概念吧)
+>  TODO: 此方案的更多理解还在进行中
