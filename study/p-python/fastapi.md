@@ -153,15 +153,16 @@
 
 ## 统一返回格式
 
-```py
+```python
 from typing import Generic, TypeVar, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from pydantic.generics import GenericModel
 
 # 定义泛型类型
 T = TypeVar("T")
 
 # 统一响应模型
-class ResponseModel(BaseModel, Generic[T]):
+class ResponseModel(GenericModel, Generic[T]):
     code: int = 200
     message: str = "success"
     data: Optional[T] = None
@@ -171,6 +172,13 @@ class User(BaseModel):
     username: str
     email: str
     age: int
+    created_at: datetime = Field(default_factory=datetime.now)
+
+    model_config = {
+        "json_encoders": {
+            datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")
+        }
+    }
 
 @app.post("/users/")
 async def create_user(user: User) -> ResponseModel[User]:
@@ -184,7 +192,7 @@ async def create_user(user: User) -> ResponseModel[User]:
 
 简化
 
-```py
+```python
 def success_response(data: T = None, message: str = "success") -> ResponseModel[T]:
     return ResponseModel(
         code=200,
@@ -212,24 +220,24 @@ async def get_user(user_id: int):
 
 ## datetime 类型的字段时，最好进行格式化处理
 
-1. **使用 Pydantic 的 Config 类配置**：
-    > 如果所有 datetime 字段都使用相同的格式，使用 Config 方式最简单
+1. **使用 Pydantic 的 model_config 类配置**：
+    > 如果所有 datetime 字段都使用相同的格式，使用 model_config 方式最简单
 
 ```python
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class User(BaseModel):
     username: str
     email: str
     age: int
-    created_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
     
-    class Config:
-        # 配置 JSON 序列化时的日期格式
-        json_encoders = {
+    model_config = {
+        "json_encoders": {
             datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")
         }
+    }
 ```
 
 2. **使用 Pydantic 的 Field 配置**：
@@ -273,12 +281,12 @@ class User(BaseModel):
     email: str
     age: int
     created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
 
-    class Config:
-        json_encoders = {
+    model_config = {
+        "json_encoders": {
             datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")
         }
+    }
 
 @app.post("/users/")
 async def create_user(user: User) -> ResponseModel[User]:
@@ -299,8 +307,7 @@ async def create_user(user: User) -> ResponseModel[User]:
         "username": "张三",
         "email": "zhangsan@example.com",
         "age": 25,
-        "created_at": "2023-12-20 15:30:00",
-        "updated_at": "2023-12-20 15:30:00"
+        "created_at": "2023-12-20 15:30:00"
     }
 }
 ```
@@ -311,7 +318,7 @@ async def create_user(user: User) -> ResponseModel[User]:
    >如果需要对不同字段使用不同的格式，使用 validator 装饰器更灵活
 
 ```python
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 class User(BaseModel):
     username: str
@@ -319,14 +326,52 @@ class User(BaseModel):
     age: int
     created_at: datetime
     
-    @validator('created_at')
+    @field_validator('created_at')
     def format_datetime(cls, v):
         return v.strftime("%Y-%m-%d %H:%M:%S")
 ```
 
 ## FastAPI 在返回响应时会将对象序列化为 JSON，而 Python 的 datetime 对象默认情况下不能直接被 JSON 序列化
 
+1. json.dump不能对 datetime 对象直接格式化
+   
 ```py
+import json
+from datetime import datetime
+
+data = {
+    "name": "Alice",
+    "created_at": datetime.now()  # datetime 不能直接序列化
+}
+
+# 直接用 json.dumps() 会报错
+# print(json.dumps(data))  # TypeError: Object of type datetime is not JSON serializable
+
+# 需要提供 default 处理函数
+json_str = json.dumps(data, default=str)
+print(json_str)  # {"name": "Alice", "created_at": "2025-03-07 12:00:00"}
+```
+
+2. model_dump(mode='python')默认值是 mode是python，使用的dict方法格式化，datetime返回的还是datetime对象 后续fastapi中使用JSONResponse的时候里面使用的 json.dump方法，依旧不能格式化datetime对象。
+
+- 使用model_dump_json 或者 model_dump(mode="json")
+
+```py
+from pydantic import BaseModel
+from datetime import datetime
+
+class UserModel(BaseModel):
+    name: str
+    created_at: datetime
+
+user = UserModel(name="Alice", created_at=datetime.now())
+
+# 直接使用 model_dump_json()，无需额外处理
+json_str = user.model_dump_json()
+print(json_str)  # {"name": "Alice", "created_at": "2025-03-07T12:00:00"}
+```
+
+```python
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -339,10 +384,12 @@ class User(BaseModel):
     # 如果不配置，直接返回会出现错误
     # JSON serialization error: Object of type datetime is not JSON serializable
     
-    class Config:
-        json_encoders = {
+    # 指定编码器，可以统一返回一样的格式
+    model_config = {
+        "json_encoders": {
             datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")
         }
+    }
 
 @app.post("/users/")
 async def create_user(user: User):
@@ -351,16 +398,16 @@ async def create_user(user: User):
 
 也可以直接对 user 进行 model_dump 格式化
 
-```py
+```python
 ...
 @app.post("/users/")
 async def create_user(user: User):
-    return user.model_dump(mode=json) # 注意：有些版本默认值是python模式，这里需要改成json模式
+    return user.model_dump(mode='json')  # 注意：有些版本默认值是python模式，这里需要改成json模式
 ```
 
 fastapi返回模型的时候会自动调用model_dump方法，所以可以使用以下方式默认json模式
 
-```py
+```python
 from pydantic import BaseModel
 from typing import Any
 
@@ -379,77 +426,24 @@ class User(CustomBaseModel):  # 继承 CustomBaseModel 而不是 BaseModel
 
 @app.post("/users/")
 async def create_user(user: User):
-    return user.model_dump() # 注意：现在这里一定是json模式
+    return user.model_dump()  # 注意：现在这里一定是json模式
 ```
 
-##  SQLAlchemy ORM 模型转换到 Pydantic 模型的两种主要方式：
+##  SQLAlchemy ORM 模型转换到 Pydantic 模型的方式：
 
-### 1. orm_mode/from_orm 方式（Pydantic v1 风格）
+### 1. model_validate 方式（Pydantic v2 风格） `model_validate`: 使用 model_config 类变量配置
 
 ```python
 class UserModel(BaseModel):
     id: int
     name: str
-    
-    class Config:
-        orm_mode = True
 
-# 使用方式
-user_model = UserModel.from_orm(db_user)
-```
-
-特点：
-
-- 传统方式，向后兼容性好
-- 配置较为简单
-- 适合 Pydantic v1 版本
-- 性能相对较低
-
-### 2. model_validate 方式（Pydantic v2 风格）
-
-```python
-class UserModel(BaseModel):
-    id: int
-    name: str
-    
     # from_attributes 定义了从orm模型获取属性的方式
-    model_config = ConfigDict(from_attributes=True)
-
-    # 当 from_attributes=False 时（默认）
-    user = UserModel.model_validate(db_user.__dict__)  # 需要转换为字典
+    model_config = {
+        "from_attributes": True
+    }
 
 # 使用方式
 user_model = UserModel.model_validate(db_user)
 ```
 
-特点：
-
-- Pydantic v2 推荐方式
-- 性能更优（比 v1 快约 50%）
-- 类型提示更完善
-- 错误处理更强大
-- 配置更灵活
-
-### 主要区别：
-
-1. **性能表现**：
-   - `model_validate` 性能明显优于 `from_orm`
-   - 特别是在处理大量数据时差异更明显
-
-2. **语法风格**：
-   - `from_orm`: 使用内部 Config 类配置
-   - `model_validate`: 使用 model_config 类变量配置
-
-3. **错误处理**：
-   - `model_validate` 提供更详细的验证错误信息
-   - 错误追踪更容易
-
-4. **使用场景**：
-   - `from_orm`: 适合旧项目或需要兼容性的场景
-   - `model_validate`: 适合新项目或性能要求高的场景
-
-### 建议：
-
-1. **新项目选择**：
-   - 优先使用 `model_validate`
-   - 采用 Pydantic v2 的新特性
