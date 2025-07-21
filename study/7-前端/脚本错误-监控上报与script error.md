@@ -109,4 +109,20 @@ function report(msg, level) {
 }
 ```
 
+## 代替 sendBeacon 的方式
 
+参考文档：[MDN - Request.keepalive](https://developer.mozilla.org/en-US/docs/Web/API/Request/keepalive)
+
+### fetch 的 keepalive 属性
+
+- `keepalive` 是 Request 接口的只读属性，值为 `true` 或 `false`，表示当页面在请求完成前被卸载时，浏览器是否会保持该请求处于活动状态。
+- 这样可以确保在会话结束时（如用户离开或关闭页面）依然能够发送分析数据。
+
+### 相比 Navigator.sendBeacon() 的优势
+
+- 支持除 POST 以外的 HTTP 方法
+- 可自定义请求属性
+- 通过 fetch Promise 可访问服务器响应
+- 可在 Service Worker（服务工作者）中使用
+
+这种方式与 sendBeacon 目的类似，但功能更灵活，适用于更多场景。
