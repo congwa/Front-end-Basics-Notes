@@ -45,7 +45,7 @@ git clone git@github.com-repo-1:OWNER/repo-1.git
 1. 为url168/astro3这个仓库生成一个专用的密钥对。你可以使用ssh-keygen命令来生成一个新的SSH密钥对。例如：
 
 ```sh
-ssh-keygen -f ~/.ssh/astro3_deploy_key
+ssh-keygen -f ~/.ssh/biomed168_tools_key
 ```
 
 这将生成一个名为`astro3_deploy_key`的私钥和一个名为`astro3_deploy_key.pub`的公钥文件。
@@ -66,9 +66,41 @@ Host github.com-url169
 
 ```sh
 git clone git@github.com-url169:url168/astro3.git
+git@github.com-biomed168-tools:biomed168/biomed168-tools.git
 ```
 
 这将使用为该别名指定的唯一部署密钥进行身份验证。
+
+
+
+
+## git 22端口被封常识使用 443 端口
+
+```shell
+# SSH配置文件示例 - 解决GitHub 22端口被封问题
+# 当GitHub的22端口被防火墙阻止时，可以使用443端口进行SSH连接
+
+# 第一个配置：默认的GitHub连接配置
+Host github.com
+    # 指定实际连接的主机名，使用GitHub的SSH服务
+    HostName ssh.github.com
+    # 使用443端口而不是默认的22端口，443端口通常不会被防火墙阻止
+    Port 443
+    # 指定SSH连接使用的用户名，GitHub要求使用git用户
+    User git
+
+# 第二个配置：特定仓库的专用配置
+Host github.com-biomed168-tools
+    # 同样连接到GitHub的SSH服务
+    HostName ssh.github.com
+    # 使用443端口绕过防火墙限制
+    Port 443
+    # 使用git用户进行身份验证
+    User git
+    # 指定该仓库专用的私钥文件路径
+    # 这样可以为一台服务器上的不同仓库使用不同的SSH密钥
+    IdentityFile ~/.ssh/biomed168_tools_key
+```
 
 
 
