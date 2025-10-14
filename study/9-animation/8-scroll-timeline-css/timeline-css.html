@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScrollAnimator SDK Demo - 滚动驱动动画系统</title>
+<!--
+  ============================================
+  ScrollAnimator 滚动动画系统演示
+  ============================================
+  
+  技术说明：
+  这是一个基于滚动位置的动画引擎，完全使用 JavaScript 控制动画效果。
+  
+  核心原理：
+  1. 监听 window.scroll 事件
+  2. 根据当前滚动位置（scrollY）计算动画进度（0-1）
+  3. 使用线性插值（LERP）在起始值和结束值之间计算当前帧的属性
+  4. 通过 transform 和 opacity 等 CSS 属性实现动画
+  5. 使用 requestAnimationFrame 优化性能
+  
+  优势：
+  ✅ 配置驱动 - 无需编写复杂的 CSS 动画
+  ✅ 高性能 - RAF 节流 + passive 事件监听
+  ✅ 灵活扩展 - 支持自定义缓动函数和回调
+  ✅ 易于维护 - 声明式配置，逻辑清晰
+  
+  与 CSS Scroll Timeline 的对比：
+  - CSS Scroll Timeline: 浏览器原生支持，但兼容性较差
+  - ScrollAnimator: 纯 JS 实现，兼容性好，功能更灵活
+  
+  适用场景：
+  - 产品介绍页面的滚动动画
+  - 数据可视化的渐进展示
+  - 长页面的视觉引导
+  - 交互式故事叙述
+-->
+<style>
+  /**
+   * 基础样式重置
+   */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /**
+   * 页面主体样式
+   * height: 400vh 创建足够的滚动空间（4倍视口高度）
+   */
+  body {
+    height: 400vh;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f5f5 50%, #e0e0e0 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /**
+   * 固定顶部标题栏
+   * backdrop-filter 实现毛玻璃效果
+   */
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    text-align: center;
+  }
+
+  .header h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+
+  .header p {
+    font-size: 14px;
+    color: #666;
+  }
+
+  /**
+   * 滚动位置指示器
+   * 实时显示当前滚动位置
+   */
+  .scroll-indicator {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    z-index: 999;
+    min-width: 150px;
+  }
+
+  .scroll-indicator .label {
+    opacity: 0.7;
+    font-size: 10px;
+  }
+
+  .scroll-indicator .value {
+    font-size: 16px;
+    font-weight: bold;
+    color: #4caf50;
+  }
+
+  /**
+   * 动画盒子容器
+   * padding-top 为顶部标题栏留出空间
+   */
+  .box-container {
+    position: relative;
+    padding-top: 100px;
+  }
+
+  /**
+   * 动画盒子基础样式
+   * 
+   * position: sticky - 元素在滚动时固定在视口中
+   * top: 40% - 固定在视口 40% 的位置
+   * 
+   * 初始状态：
+   * - opacity: 0 (不可见)
+   * - transform: translateY(100px) (向下偏移)
+   * 
+   * 这些初始值会被 ScrollAnimator 根据滚动位置动态修改
+   */
+  .box {
+    position: sticky;
+    top: 40%;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    border-radius: 16px;
+    opacity: 0;
+    transform: translateY(100px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.3s ease;
+    will-change: transform, opacity; /* 优化动画性能 */
+  }
+
+  .box:hover {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .box .label {
+    font-size: 12px;
+    margin-top: 5px;
+    opacity: 0.8;
+  }
+
+  /**
+   * 页脚提示信息
+   */
+  .footer {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+    z-index: 999;
+  }
+
+  /**
+   * 控制面板样式
+   */
+  .control-panel {
+    position: fixed;
+    bottom: 80px;
+    left: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    font-size: 12px;
+  }
+
+  .control-panel h3 {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #333;
+  }
+
+  .control-panel button {
+    margin: 5px 0;
+    padding: 8px 12px;
+    background: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .control-panel button:hover {
+    background: #1976d2;
+  }
+
+  .control-panel .status {
+    margin-top: 10px;
+    padding: 8px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<!-- 页面标题 -->
+<div class="header">
+  <h1>🎬 ScrollAnimator SDK Demo</h1>
+  <p>基于滚动位置的动画引擎 | 配置驱动 | 高性能 RAF 优化</p>
+</div>
+
+<!-- 滚动位置指示器 -->
+<div class="scroll-indicator">
+  <div class="label">滚动位置</div>
+  <div class="value"><span id="scroll-pos">0</span> px</div>
+</div>
+
+<!-- 控制面板 -->
+<div class="control-panel">
+  <h3>🎮 控制面板</h3>
+  <button onclick="scrollToTop()">⬆️ 回到顶部</button>
+  <button onclick="toggleDebug()">🐛 切换调试模式</button>
+  <button onclick="showAnimatorInfo()">ℹ️ 查看动画信息</button>
+  <div class="status">
+    <div>动画数量: <span id="anim-count">0</span></div>
+    <div>调试模式: <span id="debug-status">开启</span></div>
+  </div>
+</div>
+
+<!-- 动画盒子容器 -->
+<div class="box-container" id="box-container">
+  <!-- 盒子将通过 JS 动态创建 -->
+</div>
+
+<!-- 页脚提示 -->
+<div class="footer">
+  👇 向下滚动查看动画效果 | 打开控制台查看调试信息
+</div>
+
+<!-- 引入 ScrollAnimator SDK -->
+<script src="./ScrollAnimator.js"></script>
+
+<script>
+/**
+ * ============================================
+ * ScrollAnimator 配置文件
+ * ============================================
+ * 
+ * 配置项说明：
+ * 
+ * @param {string} selector - CSS 选择器，用于定位要应用动画的元素
+ * @param {number} scrollStart - 动画开始的滚动位置（像素）
+ * @param {number} scrollEnd - 动画结束的滚动位置（像素）
+ * @param {Object} keyframes - 关键帧配置
+ *   @param {Object} from - 起始状态
+ *     - x: X 轴偏移量（像素）
+ *     - y: Y 轴偏移量（像素）
+ *     - scale: 缩放比例（1 = 原始大小）
+ *     - rotate: 旋转角度（度）
+ *     - opacity: 不透明度（0-1）
+ *   @param {Object} to - 结束状态（同上）
+ * @param {string} easing - 缓动函数类型（可选）
+ *   - 'linear': 线性（默认）
+ *   - 'ease' / 'easeInOut': 先慢后快再慢
+ *   - 'easeIn': 由慢到快
+ *   - 'easeOut': 由快到慢
+ * @param {Function} onEnter - 进入动画区域时的回调（可选）
+ * @param {Function} onLeave - 离开动画区域时的回调（可选）
+ * @param {Function} onUpdate - 动画更新时的回调（可选）
+ */
+const animationConfig = [
+  // 动画 1: 从下方淡入
+  {
+    selector: '.box:nth-child(1)',
+    scrollStart: 100,
+    scrollEnd: 500,
+    keyframes: {
+      from: { y: 100, opacity: 0 },
+      to: { y: 0, opacity: 1 }
+    },
+    easing: 'easeOut',
+    onEnter: (el) => console.log('✅ 盒子 1 进入视野'),
+    onLeave: (el) => console.log('❌ 盒子 1 离开视野')
+  },
+  
+  // 动画 2: 缩放 + 淡入
+  {
+    selector: '.box:nth-child(2)',
+    scrollStart: 400,
+    scrollEnd: 900,
+    keyframes: {
+      from: { scale: 0.5, opacity: 0 },
+      to: { scale: 1, opacity: 1 }
+    },
+    easing: 'ease'
+  },
+  
+  // 动画 3: 从左侧滑入
+  {
+    selector: '.box:nth-child(3)',
+    scrollStart: 800,
+    scrollEnd: 1300,
+    keyframes: {
+      from: { x: -100, opacity: 0 },
+      to: { x: 0, opacity: 1 }
+    },
+    easing: 'easeIn'
+  },
+  
+  // 动画 4: 旋转 + 上升
+  {
+    selector: '.box:nth-child(4)',
+    scrollStart: 1200,
+    scrollEnd: 1700,
+    keyframes: {
+      from: { y: 200, rotate: -45, opacity: 0 },
+      to: { y: 0, rotate: 0, opacity: 1 }
+    },
+    easing: 'ease'
+  },
+  
+  // 动画 5: 旋转 + 缩放
+  {
+    selector: '.box:nth-child(5)',
+    scrollStart: 1600,
+    scrollEnd: 2100,
+    keyframes: {
+      from: { rotate: -90, scale: 0.3, opacity: 0 },
+      to: { rotate: 0, scale: 1, opacity: 1 }
+    },
+    easing: 'easeOut'
+  },
+  
+  // 动画 6: 从右侧缩放进入
+  {
+    selector: '.box:nth-child(6)',
+    scrollStart: 2000,
+    scrollEnd: 2500,
+    keyframes: {
+      from: { scale: 0.3, x: 100, opacity: 0 },
+      to: { scale: 1, x: 0, opacity: 1 }
+    },
+    easing: 'ease'
+  },
+  
+  // 动画 7: 大幅度上升 + 缩放
+  {
+    selector: '.box:nth-child(7)',
+    scrollStart: 2400,
+    scrollEnd: 2900,
+    keyframes: {
+      from: { y: 150, scale: 1.5, opacity: 0 },
+      to: { y: 0, scale: 1, opacity: 1 }
+    },
+    easing: 'easeIn'
+  },
+  
+  // 动画 8: 旋转滑入
+  {
+    selector: '.box:nth-child(8)',
+    scrollStart: 2800,
+    scrollEnd: 3300,
+    keyframes: {
+      from: { x: 150, rotate: 45, opacity: 0 },
+      to: { x: 0, rotate: 0, opacity: 1 }
+    },
+    easing: 'ease'
+  },
+  
+  // 动画 9: 缩放 + 上升
+  {
+    selector: '.box:nth-child(9)',
+    scrollStart: 3200,
+    scrollEnd: 3700,
+    keyframes: {
+      from: { y: 100, scale: 0.5, opacity: 0 },
+      to: { y: 0, scale: 1, opacity: 1 }
+    },
+    easing: 'easeOut'
+  },
+  
+  // 动画 10: 旋转 360° + 缩放
+  {
+    selector: '.box:nth-child(10)',
+    scrollStart: 3600,
+    scrollEnd: 4000,
+    keyframes: {
+      from: { scale: 0.5, rotate: 180, opacity: 0 },
+      to: { scale: 1, rotate: 0, opacity: 1 }
+    },
+    easing: 'ease',
+    onEnter: (el) => console.log('🎉 最后一个盒子进入视野！')
+  }
+];
+
+/**
+ * 盒子样式配置
+ * 定义每个盒子的背景色和显示文本
+ */
+const boxStyles = [
+  { background: 'linear-gradient(135deg, #f44336, #e91e63)', number: '1', label: 'Fade Up' },
+  { background: 'linear-gradient(135deg, #2196f3, #03a9f4)', number: '2', label: 'Scale' },
+  { background: 'linear-gradient(135deg, #4caf50, #8bc34a)', number: '3', label: 'Slide Left' },
+  { background: 'linear-gradient(135deg, #ff9800, #ffc107)', number: '4', label: 'Rotate' },
+  { background: 'linear-gradient(135deg, #9c27b0, #ba68c8)', number: '5', label: 'Spin' },
+  { background: 'linear-gradient(135deg, #00bcd4, #26c6da)', number: '6', label: 'Slide Right' },
+  { background: 'linear-gradient(135deg, #cddc39, #d4e157)', number: '7', label: 'Zoom' },
+  { background: 'linear-gradient(135deg, #795548, #8d6e63)', number: '8', label: 'Twist' },
+  { background: 'linear-gradient(135deg, #607d8b, #78909c)', number: '9', label: 'Pop' },
+  { background: 'linear-gradient(135deg, #e91e63, #f06292)', number: '10', label: 'Flip' }
+];
+
+/**
+ * 动态创建盒子元素
+ * 使用原生 JavaScript 创建 DOM 元素，避免硬编码 HTML
+ * 
+ * @returns {void}
+ */
+function createBoxes() {
+  const container = document.getElementById('box-container');
+  
+  boxStyles.forEach((style, index) => {
+    // 创建盒子元素
+    const box = document.createElement('div');
+    box.className = 'box';
+    box.style.background = style.background;
+    
+    // 创建数字显示
+    const number = document.createElement('div');
+    number.textContent = style.number;
+    box.appendChild(number);
+    
+    // 创建标签显示
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = style.label;
+    box.appendChild(label);
+    
+    // 添加到容器
+    container.appendChild(box);
+  });
+
+  console.log(`✅ 成功创建 ${boxStyles.length} 个动画盒子`);
+}
+
+/**
+ * 更新滚动位置指示器
+ * 实时显示当前滚动位置
+ * 
+ * @returns {void}
+ */
+function updateScrollIndicator() {
+  const scrollPosElement = document.getElementById('scroll-pos');
+  
+  window.addEventListener('scroll', () => {
+    scrollPosElement.textContent = Math.round(window.scrollY);
+  }, { passive: true });
+}
+
+/**
+ * 回到顶部
+ */
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+/**
+ * 切换调试模式
+ */
+function toggleDebug() {
+  if (window.animator) {
+    window.animator.debug = !window.animator.debug;
+    document.getElementById('debug-status').textContent = window.animator.debug ? '开启' : '关闭';
+    console.log(`🐛 调试模式: ${window.animator.debug ? '开启' : '关闭'}`);
+  }
+}
+
+/**
+ * 显示动画信息
+ */
+function showAnimatorInfo() {
+  if (window.animator) {
+    console.log('📊 ScrollAnimator 信息:');
+    console.table(window.animator.animations.map(a => ({
+      选择器: a.selector,
+      开始位置: a.scrollStart,
+      结束位置: a.scrollEnd,
+      缓动函数: a.easing || 'linear',
+      是否在范围内: a._isInRange
+    })));
+  }
+}
+
+/**
+ * 初始化应用
+ * 
+ * 执行流程：
+ * 1. 创建盒子元素（必须先创建，ScrollAnimator 才能找到元素）
+ * 2. 初始化 ScrollAnimator 实例
+ * 3. 设置滚动指示器
+ * 4. 暴露全局变量方便调试
+ * 
+ * @returns {void}
+ */
+function init() {
+  console.log('🚀 开始初始化 ScrollAnimator...');
+  
+  // 1. 创建盒子元素
+  createBoxes();
+
+  // 2. 初始化 ScrollAnimator
+  // 传入动画配置数组和选项对象
+  const animator = new ScrollAnimator(animationConfig, {
+    debug: true // 开启调试模式，在控制台查看详细信息
+  });
+
+  // 3. 更新滚动指示器
+  updateScrollIndicator();
+
+  // 4. 更新控制面板状态
+  document.getElementById('anim-count').textContent = animator.animations.length;
+  document.getElementById('debug-status').textContent = animator.debug ? '开启' : '关闭';
+
+  // 5. 将 animator 实例暴露到全局，方便调试
+  window.animator = animator;
+
+  console.log('✅ ScrollAnimator 初始化完成！');
+  console.log('💡 提示：打开控制台查看调试信息');
+  console.log('💡 提示：可通过 window.animator 访问动画实例');
+  console.log('💡 可用方法：');
+  console.log('   - animator.update() - 手动更新动画');
+  console.log('   - animator.destroy() - 销毁动画系统');
+  console.log('   - animator.addAnimation(config) - 添加新动画');
+  console.log('   - animator.removeAnimation(selector) - 移除动画');
+}
+
+/**
+ * DOM 加载完成后初始化
+ * 确保在 DOM 准备好之后再执行初始化
+ */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+
+</body>
+</html>
