@@ -1,24 +1,41 @@
 /**
- * ScrollAnimator SDK
+ * ScrollAnimator SDK - CSS Animation Delay 版本
  * 
- * 基于滚动位置的动画引擎，通过配置驱动实现滚动触发的动画效果
+ * 基于滚动位置的动画引擎，通过动态控制 CSS animation-delay 实现滚动驱动动画
  * 
- * 核心原理：
- * 1. 监听页面滚动事件
- * 2. 根据当前滚动位置计算动画进度（0-1之间）
- * 3. 使用线性插值（lerp）在起始值和结束值之间计算当前帧的属性值
- * 4. 应用 transform 和 opacity 等 CSS 属性实现动画效果
- * 5. 使用 requestAnimationFrame 优化性能，避免频繁重绘
+ * 🎯 核心原理:
+ * 1. CSS 定义 @keyframes 动画，设置 animation-play-state: paused (暂停状态)
+ * 2. 监听页面滚动事件
+ * 3. 根据当前滚动位置计算动画进度 (progress = scrollY / scrollRange)
+ * 4. 计算动画应该播放到的时间点 (currentTime = duration * progress)
+ * 5. 设置负的 animation-delay 值 (animation-delay = -currentTime)
+ * 6. 浏览器会自动将动画渲染到对应的时间帧上
  * 
- * 优势：
- * - 完全 JS 控制，无需编写 CSS 动画
- * - 配置化驱动，易于维护和复用
- * - 支持多种缓动函数（easing）
- * - 高性能：使用 RAF 节流
- * - 可扩展：支持回调、自定义缓动等
+ * 🧠 关键技术点:
+ * - animation-play-state: paused → 动画不会自动播放
+ * - animation-delay: -Xs → 代表动画已经播放了 X 秒，浏览器会渲染到该时间点的状态
+ * - 通过动态修改 animation-delay，实现"手动拖动"动画进度的效果
+ * 
+ * 📊 示例:
+ * 假设动画时长 duration = 2s，滚动范围 scrollRange = 800px
+ * - scroll = 0px   → progress = 0   → currentTime = 0s   → animation-delay: 0s
+ * - scroll = 400px → progress = 0.5 → currentTime = 1s   → animation-delay: -1s
+ * - scroll = 800px → progress = 1   → currentTime = 2s   → animation-delay: -2s
+ * 
+ * ✅ 优势:
+ * - 利用 CSS 动画引擎，性能更好
+ * - 代码更简洁，逻辑更清晰
+ * - 可以复用现有的 CSS @keyframes 动画
+ * - 支持复杂的多属性动画(transform, opacity, filter 等)
+ * - 浏览器硬件加速支持
+ * 
+ * 📦 使用方式:
+ * 1. 在 CSS 中定义 @keyframes 动画
+ * 2. 给元素添加 animation 属性，设置 animation-play-state: paused
+ * 3. 配置 ScrollAnimator 时指定 animationName 和 duration
  * 
  * @author ScrollAnimator Team
- * @version 1.0.0
+ * @version 2.0.0 (Animation Delay Edition)
  */
 
 class ScrollAnimator {
@@ -28,10 +45,8 @@ class ScrollAnimator {
    * @param {string} configs[].selector - CSS 选择器
    * @param {number} configs[].scrollStart - 动画开始的滚动位置（px）
    * @param {number} configs[].scrollEnd - 动画结束的滚动位置（px）
-   * @param {Object} configs[].keyframes - 关键帧配置
-   * @param {Object} configs[].keyframes.from - 起始状态 { x, y, scale, rotate, opacity }
-   * @param {Object} configs[].keyframes.to - 结束状态 { x, y, scale, rotate, opacity }
-   * @param {string} [configs[].easing] - 缓动函数类型（'linear' | 'ease' | 'easeIn' | 'easeOut' | 'easeInOut'）
+   * @param {string} configs[].animationName - CSS 动画名称（对应 @keyframes 中定义的名称）
+   * @param {number} configs[].duration - 动画时长（秒）
    * @param {Function} [configs[].onEnter] - 进入动画区域时的回调
    * @param {Function} [configs[].onLeave] - 离开动画区域时的回调
    * @param {Function} [configs[].onUpdate] - 动画更新时的回调，参数为 progress (0-1)
@@ -69,9 +84,10 @@ class ScrollAnimator {
       console.log('[ScrollAnimator] 初始化动画数量:', this.animations.length);
       console.table(this.animations.map(a => ({
         selector: a.selector,
+        animationName: a.animationName,
+        duration: a.duration,
         scrollStart: a.scrollStart,
-        scrollEnd: a.scrollEnd,
-        easing: a.easing || 'linear'
+        scrollEnd: a.scrollEnd
       })));
     }
 
@@ -89,83 +105,15 @@ class ScrollAnimator {
   }
 
   /**
-   * 线性插值函数
-   * 在两个值之间根据进度 t 进行插值
-   * @param {number} a - 起始值
-   * @param {number} b - 结束值
-   * @param {number} t - 进度 (0-1)
-   * @returns {number} 插值结果
-   * @private
-   */
-  _lerp(a, b, t) {
-    return a + (b - a) * t;
-  }
-
-  /**
-   * 缓动函数：easeInOut（二次方）
-   * 开始和结束时缓慢，中间加速
-   * @param {number} t - 进度 (0-1)
-   * @returns {number} 缓动后的进度
-   * @private
-   */
-  _easeInOutQuad(t) {
-    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-  }
-
-  /**
-   * 缓动函数：easeIn（二次方）
-   * 开始缓慢，逐渐加速
-   * @param {number} t - 进度 (0-1)
-   * @returns {number} 缓动后的进度
-   * @private
-   */
-  _easeIn(t) {
-    return t * t;
-  }
-
-  /**
-   * 缓动函数：easeOut（二次方）
-   * 开始快速，逐渐减速
-   * @param {number} t - 进度 (0-1)
-   * @returns {number} 缓动后的进度
-   * @private
-   */
-  _easeOut(t) {
-    return t * (2 - t);
-  }
-
-  /**
-   * 应用缓动函数
-   * @param {number} progress - 原始进度 (0-1)
-   * @param {string} easingType - 缓动类型
-   * @returns {number} 缓动后的进度
-   * @private
-   */
-  _applyEasing(progress, easingType) {
-    switch (easingType) {
-      case 'ease':
-      case 'easeInOut':
-        return this._easeInOutQuad(progress);
-      case 'easeIn':
-        return this._easeIn(progress);
-      case 'easeOut':
-        return this._easeOut(progress);
-      case 'linear':
-      default:
-        return progress;
-    }
-  }
-
-  /**
    * 滚动事件处理函数
-   * 计算每个动画的当前状态并更新 DOM
+   * 计算每个动画的当前状态并更新 animation-delay
    * @private
    */
   _onScroll() {
     const scrollY = window.scrollY;
 
     this.animations.forEach(anim => {
-      const { el, scrollStart, scrollEnd, keyframes, easing, onEnter, onLeave, onUpdate } = anim;
+      const { el, scrollStart, scrollEnd, animationName, duration, onEnter, onLeave, onUpdate } = anim;
       if (!el) return;
 
       // 计算原始进度：当前滚动位置在动画区间中的比例
@@ -173,9 +121,6 @@ class ScrollAnimator {
       
       // 限制进度在 [0, 1] 范围内
       progress = Math.min(Math.max(progress, 0), 1);
-
-      // 应用缓动函数
-      const t = this._applyEasing(progress, easing || 'linear');
 
       // 检测是否进入/离开动画区域（用于触发回调）
       const isInRange = progress > 0 && progress < 1;
@@ -188,30 +133,26 @@ class ScrollAnimator {
 
       // 触发更新回调
       if (onUpdate) {
-        onUpdate(progress, t);
+        onUpdate(progress);
       }
 
-      // 从 keyframes 中提取起始和结束值
-      const kf = keyframes;
+      // 🎯 核心逻辑：根据进度计算当前应该处于的动画时间点
+      const currentTime = duration * progress;
       
-      // 计算当前帧的各个属性值
-      const tx = this._lerp(kf.from.x || 0, kf.to.x || 0, t);
-      const ty = this._lerp(kf.from.y || 0, kf.to.y || 0, t);
-      const sc = this._lerp(kf.from.scale || 1, kf.to.scale || 1, t);
-      const rt = this._lerp(kf.from.rotate || 0, kf.to.rotate || 0, t);
-      const op = this._lerp(kf.from.opacity ?? 1, kf.to.opacity ?? 1, t);
-
-      // 应用样式到 DOM 元素
-      el.style.transform = `
-        translate(${tx}px, ${ty}px)
-        scale(${sc})
-        rotate(${rt}deg)
-      `;
-      el.style.opacity = op;
+      // 🔑 关键步骤：设置负的 animation-delay
+      // 负值表示动画已经播放了这么长时间，浏览器会渲染到对应的时间帧
+      el.style.animationDelay = `-${currentTime}s`;
 
       // 调试模式：输出详细信息
-      if (this.debug && Math.abs(progress - 0.5) < 0.01) { // 只在中间位置输出，避免刷屏
-        console.log(`[ScrollAnimator] ${anim.selector} - progress: ${progress.toFixed(2)}, t: ${t.toFixed(2)}`);
+      if (this.debug && progress > 0 && progress < 1) {
+        const scrollPercent = ((progress * 100).toFixed(1) + '%').padEnd(6);
+        const delayValue = `-${currentTime.toFixed(3)}s`.padEnd(8);
+        console.log(
+          `[ScrollAnimator] ${anim.selector.padEnd(20)} | ` +
+          `progress: ${scrollPercent} | ` +
+          `delay: ${delayValue} | ` +
+          `scroll: ${Math.round(scrollY)}px`
+        );
       }
     });
   }

@@ -3,33 +3,37 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ScrollAnimator SDK Demo - 滚动驱动动画系统</title>
+<title>ScrollAnimator - Animation Delay 滚动驱动动画</title>
 <!--
   ============================================
   ScrollAnimator 滚动动画系统演示
+  Animation Delay 版本
   ============================================
   
-  技术说明：
-  这是一个基于滚动位置的动画引擎，完全使用 JavaScript 控制动画效果。
+  🎯 核心技术：
+  这是一个通过控制 CSS animation-delay 实现滚动驱动动画的系统
   
-  核心原理：
-  1. 监听 window.scroll 事件
-  2. 根据当前滚动位置（scrollY）计算动画进度（0-1）
-  3. 使用线性插值（LERP）在起始值和结束值之间计算当前帧的属性
-  4. 通过 transform 和 opacity 等 CSS 属性实现动画
-  5. 使用 requestAnimationFrame 优化性能
+  🧠 核心原理：
+  1. CSS 定义 @keyframes 动画，设置 animation-play-state: paused
+  2. 监听 window.scroll 事件
+  3. 根据滚动位置计算动画进度（progress = scrollY / scrollRange）
+  4. 计算动画应该处于的时间点（currentTime = duration * progress）
+  5. 设置负的 animation-delay（animation-delay = -currentTime）
+  6. 浏览器自动渲染到对应时间帧的状态
   
-  优势：
-  ✅ 配置驱动 - 无需编写复杂的 CSS 动画
-  ✅ 高性能 - RAF 节流 + passive 事件监听
-  ✅ 灵活扩展 - 支持自定义缓动函数和回调
-  ✅ 易于维护 - 声明式配置，逻辑清晰
+  🔑 关键点：
+  - animation-play-state: paused → 动画暂停，不会自动播放
+  - animation-delay: -Xs → 表示动画已播放 X 秒，浏览器渲染到该帧
+  - 通过 JS 动态修改 delay，实现"手动拖动"动画进度
   
-  与 CSS Scroll Timeline 的对比：
-  - CSS Scroll Timeline: 浏览器原生支持，但兼容性较差
-  - ScrollAnimator: 纯 JS 实现，兼容性好，功能更灵活
+  ✅ 优势：
+  - 利用 CSS 动画引擎，性能更优
+  - 代码更简洁，逻辑更清晰
+  - 支持复杂的多属性动画
+  - 浏览器硬件加速
+  - 易于维护和扩展
   
-  适用场景：
+  📦 适用场景：
   - 产品介绍页面的滚动动画
   - 数据可视化的渐进展示
   - 长页面的视觉引导
@@ -124,16 +128,144 @@
   }
 
   /**
+   * ========================================
+   * CSS @keyframes 动画定义
+   * ========================================
+   * 
+   * 这些动画会被 ScrollAnimator 通过 animation-delay 控制
+   * 每个动画都设置了 animation-play-state: paused，不会自动播放
+   */
+  
+  /* 动画1: 从下方淡入 */
+  @keyframes fadeUp {
+    from {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* 动画2: 缩放淡入 */
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* 动画3: 从左侧滑入 */
+  @keyframes slideLeft {
+    from {
+      transform: translateX(-100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* 动画4: 旋转上升 */
+  @keyframes rotateUp {
+    from {
+      transform: translateY(200px) rotate(-45deg);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  /* 动画5: 旋转缩放 */
+  @keyframes spinScale {
+    from {
+      transform: rotate(-90deg) scale(0.3);
+      opacity: 0;
+    }
+    to {
+      transform: rotate(0deg) scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* 动画6: 从右侧缩放进入 */
+  @keyframes slideRightScale {
+    from {
+      transform: translateX(100px) scale(0.3);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* 动画7: 大幅上升缩放 */
+  @keyframes zoomUp {
+    from {
+      transform: translateY(150px) scale(1.5);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* 动画8: 旋转滑入 */
+  @keyframes twistIn {
+    from {
+      transform: translateX(150px) rotate(45deg);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  /* 动画9: 弹出效果 */
+  @keyframes popIn {
+    from {
+      transform: translateY(100px) scale(0.5);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* 动画10: 翻转进入 */
+  @keyframes flipIn {
+    from {
+      transform: scale(0.5) rotate(180deg);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  /**
    * 动画盒子基础样式
    * 
    * position: sticky - 元素在滚动时固定在视口中
    * top: 40% - 固定在视口 40% 的位置
    * 
-   * 初始状态：
-   * - opacity: 0 (不可见)
-   * - transform: translateY(100px) (向下偏移)
-   * 
-   * 这些初始值会被 ScrollAnimator 根据滚动位置动态修改
+   * 🔑 核心设置：
+   * - animation: 2s linear forwards - 设置动画时长和模式
+   * - animation-play-state: paused - 暂停动画，不会自动播放
+   * - animation-delay 会被 JS 动态设置
    */
   .box {
     position: sticky;
@@ -142,8 +274,6 @@
     height: 150px;
     margin: 0 auto;
     border-radius: 16px;
-    opacity: 0;
-    transform: translateY(100px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -154,6 +284,10 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     transition: box-shadow 0.3s ease;
     will-change: transform, opacity; /* 优化动画性能 */
+    
+    /* 🎯 关键：动画设置 */
+    animation: 2s linear forwards;
+    animation-play-state: paused; /* 暂停状态，通过 JS 控制 */
   }
 
   .box:hover {
@@ -165,6 +299,18 @@
     margin-top: 5px;
     opacity: 0.8;
   }
+
+  /* 为每个盒子分配对应的动画 */
+  .box:nth-child(1) { animation-name: fadeUp; }
+  .box:nth-child(2) { animation-name: scaleIn; }
+  .box:nth-child(3) { animation-name: slideLeft; }
+  .box:nth-child(4) { animation-name: rotateUp; }
+  .box:nth-child(5) { animation-name: spinScale; }
+  .box:nth-child(6) { animation-name: slideRightScale; }
+  .box:nth-child(7) { animation-name: zoomUp; }
+  .box:nth-child(8) { animation-name: twistIn; }
+  .box:nth-child(9) { animation-name: popIn; }
+  .box:nth-child(10) { animation-name: flipIn; }
 
   /**
    * 页脚提示信息
@@ -233,8 +379,8 @@
 
 <!-- 页面标题 -->
 <div class="header">
-  <h1>🎬 ScrollAnimator SDK Demo</h1>
-  <p>基于滚动位置的动画引擎 | 配置驱动 | 高性能 RAF 优化</p>
+  <h1>🎬 ScrollAnimator - Animation Delay 版</h1>
+  <p>通过 animation-delay 控制滚动驱动动画 | CSS 动画引擎 | 性能优化</p>
 </div>
 
 <!-- 滚动位置指示器 -->
@@ -271,152 +417,118 @@
 <script>
 /**
  * ============================================
- * ScrollAnimator 配置文件
+ * ScrollAnimator 配置文件 - Animation Delay 版本
  * ============================================
  * 
- * 配置项说明：
+ * 🎯 配置项说明：
  * 
  * @param {string} selector - CSS 选择器，用于定位要应用动画的元素
+ * @param {string} animationName - CSS 动画名称（对应 @keyframes 中定义的名称）
+ * @param {number} duration - 动画时长（秒）
  * @param {number} scrollStart - 动画开始的滚动位置（像素）
  * @param {number} scrollEnd - 动画结束的滚动位置（像素）
- * @param {Object} keyframes - 关键帧配置
- *   @param {Object} from - 起始状态
- *     - x: X 轴偏移量（像素）
- *     - y: Y 轴偏移量（像素）
- *     - scale: 缩放比例（1 = 原始大小）
- *     - rotate: 旋转角度（度）
- *     - opacity: 不透明度（0-1）
- *   @param {Object} to - 结束状态（同上）
- * @param {string} easing - 缓动函数类型（可选）
- *   - 'linear': 线性（默认）
- *   - 'ease' / 'easeInOut': 先慢后快再慢
- *   - 'easeIn': 由慢到快
- *   - 'easeOut': 由快到慢
  * @param {Function} onEnter - 进入动画区域时的回调（可选）
  * @param {Function} onLeave - 离开动画区域时的回调（可选）
  * @param {Function} onUpdate - 动画更新时的回调（可选）
+ * 
+ * 🔑 核心原理：
+ * - CSS 已定义 @keyframes 动画，设置了 animation-play-state: paused
+ * - JS 根据滚动位置计算 progress（0-1）
+ * - currentTime = duration * progress
+ * - 设置 animation-delay = -currentTime
+ * - 浏览器会渲染到对应时间帧的状态
  */
 const animationConfig = [
   // 动画 1: 从下方淡入
   {
     selector: '.box:nth-child(1)',
+    animationName: 'fadeUp',
+    duration: 2,
     scrollStart: 100,
     scrollEnd: 500,
-    keyframes: {
-      from: { y: 100, opacity: 0 },
-      to: { y: 0, opacity: 1 }
-    },
-    easing: 'easeOut',
     onEnter: (el) => console.log('✅ 盒子 1 进入视野'),
     onLeave: (el) => console.log('❌ 盒子 1 离开视野')
   },
   
-  // 动画 2: 缩放 + 淡入
+  // 动画 2: 缩放淡入
   {
     selector: '.box:nth-child(2)',
+    animationName: 'scaleIn',
+    duration: 2,
     scrollStart: 400,
-    scrollEnd: 900,
-    keyframes: {
-      from: { scale: 0.5, opacity: 0 },
-      to: { scale: 1, opacity: 1 }
-    },
-    easing: 'ease'
+    scrollEnd: 900
   },
   
   // 动画 3: 从左侧滑入
   {
     selector: '.box:nth-child(3)',
+    animationName: 'slideLeft',
+    duration: 2,
     scrollStart: 800,
-    scrollEnd: 1300,
-    keyframes: {
-      from: { x: -100, opacity: 0 },
-      to: { x: 0, opacity: 1 }
-    },
-    easing: 'easeIn'
+    scrollEnd: 1300
   },
   
-  // 动画 4: 旋转 + 上升
+  // 动画 4: 旋转上升
   {
     selector: '.box:nth-child(4)',
+    animationName: 'rotateUp',
+    duration: 2,
     scrollStart: 1200,
-    scrollEnd: 1700,
-    keyframes: {
-      from: { y: 200, rotate: -45, opacity: 0 },
-      to: { y: 0, rotate: 0, opacity: 1 }
-    },
-    easing: 'ease'
+    scrollEnd: 1700
   },
   
-  // 动画 5: 旋转 + 缩放
+  // 动画 5: 旋转缩放
   {
     selector: '.box:nth-child(5)',
+    animationName: 'spinScale',
+    duration: 2,
     scrollStart: 1600,
-    scrollEnd: 2100,
-    keyframes: {
-      from: { rotate: -90, scale: 0.3, opacity: 0 },
-      to: { rotate: 0, scale: 1, opacity: 1 }
-    },
-    easing: 'easeOut'
+    scrollEnd: 2100
   },
   
   // 动画 6: 从右侧缩放进入
   {
     selector: '.box:nth-child(6)',
+    animationName: 'slideRightScale',
+    duration: 2,
     scrollStart: 2000,
-    scrollEnd: 2500,
-    keyframes: {
-      from: { scale: 0.3, x: 100, opacity: 0 },
-      to: { scale: 1, x: 0, opacity: 1 }
-    },
-    easing: 'ease'
+    scrollEnd: 2500
   },
   
-  // 动画 7: 大幅度上升 + 缩放
+  // 动画 7: 大幅上升缩放
   {
     selector: '.box:nth-child(7)',
+    animationName: 'zoomUp',
+    duration: 2,
     scrollStart: 2400,
-    scrollEnd: 2900,
-    keyframes: {
-      from: { y: 150, scale: 1.5, opacity: 0 },
-      to: { y: 0, scale: 1, opacity: 1 }
-    },
-    easing: 'easeIn'
+    scrollEnd: 2900
   },
   
   // 动画 8: 旋转滑入
   {
     selector: '.box:nth-child(8)',
+    animationName: 'twistIn',
+    duration: 2,
     scrollStart: 2800,
-    scrollEnd: 3300,
-    keyframes: {
-      from: { x: 150, rotate: 45, opacity: 0 },
-      to: { x: 0, rotate: 0, opacity: 1 }
-    },
-    easing: 'ease'
+    scrollEnd: 3300
   },
   
-  // 动画 9: 缩放 + 上升
+  // 动画 9: 弹出效果
   {
     selector: '.box:nth-child(9)',
+    animationName: 'popIn',
+    duration: 2,
     scrollStart: 3200,
-    scrollEnd: 3700,
-    keyframes: {
-      from: { y: 100, scale: 0.5, opacity: 0 },
-      to: { y: 0, scale: 1, opacity: 1 }
-    },
-    easing: 'easeOut'
+    scrollEnd: 3700
   },
   
-  // 动画 10: 旋转 360° + 缩放
+  // 动画 10: 翻转进入
   {
     selector: '.box:nth-child(10)',
+    animationName: 'flipIn',
+    duration: 2,
     scrollStart: 3600,
     scrollEnd: 4000,
-    keyframes: {
-      from: { scale: 0.5, rotate: 180, opacity: 0 },
-      to: { scale: 1, rotate: 0, opacity: 1 }
-    },
-    easing: 'ease',
     onEnter: (el) => console.log('🎉 最后一个盒子进入视野！')
   }
 ];
