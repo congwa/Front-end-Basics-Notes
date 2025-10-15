@@ -356,14 +356,3 @@ const animator = new ScrollAnimator(configs, {
 | 灵活性 | ⭐⭐⭐⭐ 可编程 | ⭐⭐⭐ CSS限制 |
 | 生产就绪 | ⭐⭐⭐⭐⭐ 是 | ⭐⭐ 未来 |
 
-## 📄 许可证
-
-MIT License
-
----
-
-**作者**: ScrollAnimator Team  
-**版本**: 2.0.0 (Animation Delay Edition)  
-**更新时间**: 2024
-
-**如果这个项目对你有帮助，请给个 ⭐ Star！**
