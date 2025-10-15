@@ -14,7 +14,7 @@
 
 ## 安装与配置
 
-在 macOS 上，最简单的安装方式是通过 [Homebrew](https://brew.sh/)。
+在 macOS（或 Linux） 上，最简单的安装方式是通过 [Homebrew](https://brew.sh/)。
 
 #### 1\. 安装 asdf
 
