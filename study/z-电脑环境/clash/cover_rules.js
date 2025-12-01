@@ -31,6 +31,18 @@ function main(content) {
       ]
     },
   }
+
+  // 代理组配置：定义缺失时需要创建的代理组
+  const proxyGroupsConfig = {
+    '🔗 无需代理': {
+      type: 'select',
+      proxies: ['DIRECT', 'REJECT']
+    },
+    '🛡️ 广告拦截': {
+      type: 'select',
+      proxies: ['REJECT', 'DIRECT']
+    }
+  }
   // https://github.com/clash-verge-rev/clash-verge-rev/issues/1762
   // 新增：为 tun 的排除进程提供分组式配置
   const tunConfig = {
@@ -52,6 +64,30 @@ function main(content) {
     domainRegex: (value, group) => `DOMAIN-REGEX,${value},${group}`,
   }
 
+  // 检查并创建缺失的代理组
+  const ensureProxyGroups = () => {
+    // 确保 proxy-groups 存在
+    if (!content['proxy-groups']) {
+      content['proxy-groups'] = []
+    }
+
+    // 获取现有代理组名称
+    const existingGroups = new Set(
+      content['proxy-groups'].map(group => group.name)
+    )
+
+    // 检查并添加缺失的代理组
+    Object.entries(proxyGroupsConfig).forEach(([groupName, groupConfig]) => {
+      if (!existingGroups.has(groupName)) {
+        content['proxy-groups'].push({
+          name: groupName,
+          type: groupConfig.type,
+          proxies: groupConfig.proxies
+        })
+      }
+    })
+  }
+
   // 生成规则数组
   const generateRules = () => {
     return Object.entries(rulesConfig).flatMap(([group, config]) =>
@@ -60,6 +96,9 @@ function main(content) {
       ),
     )
   }
+
+  // 先确保所需的代理组存在
+  ensureProxyGroups()
 
   // 合并规则（若已有则前置新增规则）
   if (content.rules?.length) {
