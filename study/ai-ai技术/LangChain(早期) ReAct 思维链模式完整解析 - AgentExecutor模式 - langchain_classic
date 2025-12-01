@@ -1,0 +1,834 @@
+
+
+# LangChain(早期) ReAct 思维链模式完整解析 - AgentExecutor模式
+
+## 📋 第一部分：ReAct 模式的实现原理
+
+### 一、什么是 ReAct？
+
+ReAct (Reasoning + Acting) 是一种让 LLM 交替进行 **推理思考** 和 **执行动作** 的模式，来源于论文 [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)。
+
+### 二、核心架构流程图
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                           ReAct Agent 执行流程                                         │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                     │
+│  ┌──────────────┐    ┌───────────────────────────────────────────────────────────┐ │
+│  │   用户输入    │───▶│                   AgentExecutor                           │ │
+│  │  (Question)  │    │  ┌─────────────────────────────────────────────────────┐  │ │
+│  └──────────────┘    │  │                主循环 (_call)                        │  │ │
+│                      │  │  while should_continue:                             │  │ │
+│                      │  │    ┌───────────────────────────────────────────┐   │  │ │
+│                      │  │    │ Step 1: 构建 Prompt                        │   │  │ │
+│                      │  │    │   - tools 描述                             │   │  │ │
+│                      │  │    │   - tool_names                             │   │  │ │
+│                      │  │    │   - input (用户问题)                        │   │  │ │
+│                      │  │    │   - agent_scratchpad (历史思考+观察)        │   │  │ │
+│                      │  │    └───────────────────────────────────────────┘   │  │ │
+│                      │  │                       │                             │  │ │
+│                      │  │                       ▼                             │  │ │
+│                      │  │    ┌───────────────────────────────────────────┐   │  │ │
+│                      │  │    │ Step 2: 调用 LLM                           │   │  │ │
+│                      │  │    │   llm.bind(stop=["\nObservation"])         │   │  │ │
+│                      │  │    │   生成: Thought + Action + Action Input    │   │  │ │
+│                      │  │    └───────────────────────────────────────────┘   │  │ │
+│                      │  │                       │                             │  │ │
+│                      │  │                       ▼                             │  │ │
+│                      │  │    ┌───────────────────────────────────────────┐   │  │ │
+│                      │  │    │ Step 3: 解析 LLM 输出                       │   │  │ │
+│                      │  │    │   ReActSingleInputOutputParser.parse()     │   │  │ │
+│                      │  │    │   返回: AgentAction 或 AgentFinish          │   │  │ │
+│                      │  │    └───────────────────────────────────────────┘   │  │ │
+│                      │  │                       │                             │  │ │
+│                      │  │          ┌────────────┴────────────┐                │  │ │
+│                      │  │          ▼                         ▼                │  │ │
+│                      │  │   ┌─────────────┐          ┌─────────────┐         │  │ │
+│                      │  │   │ AgentAction │          │ AgentFinish │         │  │ │
+│                      │  │   │ (继续执行)   │          │ (结束返回)   │         │  │ │
+│                      │  │   └──────┬──────┘          └──────┬──────┘         │  │ │
+│                      │  │          │                        │                 │  │ │
+│                      │  │          ▼                        │                 │  │ │
+│                      │  │   ┌─────────────┐                 │                 │  │ │
+│                      │  │   │ Step 4: 执行│                 │                 │  │ │
+│                      │  │   │ Tool.run()  │                 │                 │  │ │
+│                      │  │   │ 获取观察结果 │                 │                 │  │ │
+│                      │  │   └──────┬──────┘                 │                 │  │ │
+│                      │  │          │                        │                 │  │ │
+│                      │  │          ▼                        │                 │  │ │
+│                      │  │   ┌─────────────┐                 │                 │  │ │
+│                      │  │   │ Step 5: 更新│                 │                 │  │ │
+│                      │  │   │scratchpad   │                 │                 │  │ │
+│                      │  │   │ 继续循环... │                 │                 │  │ │
+│                      │  │   └─────────────┘                 │                 │  │ │
+│                      │  │                                   ▼                 │  │ │
+│  ┌──────────────┐    │  │                           ┌─────────────┐          │  │ │
+│  │   最终输出    │◀───│  │◀──────────────────────────│ 返回 output │          │  │ │
+│  │(Final Answer)│    │  │                           └─────────────┘          │  │ │
+│  └──────────────┘    │  └─────────────────────────────────────────────────────┘  │ │
+│                      └───────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 三、核心组件详解
+
+#### 1. `create_react_agent` 函数 - 创建 ReAct Agent
+
+```16:147:langchain_classic/agents/react/agent.py
+def create_react_agent(
+    llm: BaseLanguageModel,
+    tools: Sequence[BaseTool],
+    prompt: BasePromptTemplate,
+    output_parser: AgentOutputParser | None = None,
+    tools_renderer: ToolsRenderer = render_text_description,
+    *,
+    stop_sequence: bool | list[str] = True,
+) -> Runnable:
+    # ... 参数验证 ...
+    
+    # 关键步骤1: 填充 prompt 模板变量
+    prompt = prompt.partial(
+        tools=tools_renderer(list(tools)),          # 工具描述
+        tool_names=", ".join([t.name for t in tools]),  # 工具名称列表
+    )
+    
+    # 关键步骤2: 绑定停止词
+    if stop_sequence:
+        stop = ["\nObservation"] if stop_sequence is True else stop_sequence
+        llm_with_stop = llm.bind(stop=stop)
+    else:
+        llm_with_stop = llm
+    
+    # 关键步骤3: 使用默认解析器
+    output_parser = output_parser or ReActSingleInputOutputParser()
+    
+    # 关键步骤4: 构建 Runnable 链
+    return (
+        RunnablePassthrough.assign(
+            agent_scratchpad=lambda x: format_log_to_str(x["intermediate_steps"]),
+        )
+        | prompt
+        | llm_with_stop
+        | output_parser
+    )
+```
+
+**这个链的执行流程：**
+1. `RunnablePassthrough.assign` - 把 `intermediate_steps` 转换为 `agent_scratchpad` 字符串
+2. `prompt` - 填充 Prompt 模板
+3. `llm_with_stop` - 调用 LLM，遇到 `\nObservation` 时停止
+4. `output_parser` - 解析输出为 `AgentAction` 或 `AgentFinish`
+
+#### 2. ReAct Prompt 模板 - 核心格式
+
+```1:16:langchain_classic/agents/mrkl/prompt.py
+PREFIX = """Answer the following questions as best you can. You have access to the following tools:"""
+
+FORMAT_INSTRUCTIONS = """Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question"""
+
+SUFFIX = """Begin!
+
+Question: {input}
+Thought:{agent_scratchpad}"""
+```
+
+#### 3. `ReActSingleInputOutputParser` - 输出解析器
+
+```22:101:langchain_classic/agents/output_parsers/react_single_input.py
+class ReActSingleInputOutputParser(AgentOutputParser):
+    """解析器期望的两种输出格式:
+    
+    格式1 - 需要执行动作:
+    ```
+    Thought: agent thought here
+    Action: search
+    Action Input: what is the temperature in SF?
+    ```
+    
+    格式2 - 给出最终答案:
+    ```
+    Thought: agent thought here
+    Final Answer: The temperature is 100 degrees
+    ```
+    """
+    
+    def parse(self, text: str) -> AgentAction | AgentFinish:
+        includes_answer = "Final Answer:" in text
+        
+        # 正则匹配 Action 和 Action Input
+        regex = r"Action\s*\d*\s*:[\s]*(.*?)[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
+        action_match = re.search(regex, text, re.DOTALL)
+        
+        if action_match:
+            # 解析出工具名和输入
+            action = action_match.group(1).strip()
+            action_input = action_match.group(2).strip(" ").strip('"')
+            return AgentAction(action, action_input, text)
+        
+        if includes_answer:
+            # 提取最终答案
+            return AgentFinish(
+                {"output": text.split("Final Answer:")[-1].strip()},
+                text,
+            )
+        
+        # 解析失败抛出异常
+        raise OutputParserException(...)
+```
+
+#### 4. `AgentExecutor._call` - 主执行循环
+
+```1585:1638:langchain_classic/agents/agent.py
+def _call(self, inputs: dict[str, str], run_manager: ...):
+    """核心执行循环"""
+    name_to_tool_map = {tool.name: tool for tool in self.tools}
+    intermediate_steps: list[tuple[AgentAction, str]] = []
+    iterations = 0
+    start_time = time.time()
+    
+    # 主循环
+    while self._should_continue(iterations, time_elapsed):
+        # Step 1: 调用 Agent 获取下一步动作
+        next_step_output = self._take_next_step(
+            name_to_tool_map, color_mapping, inputs, 
+            intermediate_steps, run_manager
+        )
+        
+        # Step 2: 检查是否结束
+        if isinstance(next_step_output, AgentFinish):
+            return self._return(next_step_output, intermediate_steps, ...)
+        
+        # Step 3: 更新中间步骤（包含工具执行结果）
+        intermediate_steps.extend(next_step_output)
+        
+        iterations += 1
+        time_elapsed = time.time() - start_time
+    
+    # 达到最大迭代次数
+    return self._action_agent.return_stopped_response(...)
+```
+
+#### 5. `format_log_to_str` - 构建思维历史
+
+```4:23:langchain_classic/agents/format_scratchpad/log.py
+def format_log_to_str(
+    intermediate_steps: list[tuple[AgentAction, str]],
+    observation_prefix: str = "Observation: ",
+    llm_prefix: str = "Thought: ",
+) -> str:
+    """将历史步骤转换为 scratchpad 字符串"""
+    thoughts = ""
+    for action, observation in intermediate_steps:
+        thoughts += action.log       # 之前的 Thought + Action + Action Input
+        thoughts += f"\n{observation_prefix}{observation}\n{llm_prefix}"
+    return thoughts
+```
+
+### 四、一次完整的 ReAct 交互示例
+
+假设用户问："今天北京的天气如何？"
+
+**第1轮对话 - 发送给 LLM 的完整 Prompt：**
+
+```
+Answer the following questions as best you can. You have access to the following tools:
+
+search: 搜索互联网获取信息
+calculator: 进行数学计算
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [search, calculator]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: 今天北京的天气如何？
+Thought:
+```
+
+**LLM 输出（遇到 `\nObservation` 停止）：**
+
+```
+我需要搜索北京今天的天气信息。
+Action: search
+Action Input: 北京今天天气
+```
+
+**解析器解析结果：**
+```python
+AgentAction(
+    tool="search",
+    tool_input="北京今天天气",
+    log="我需要搜索北京今天的天气信息。\nAction: search\nAction Input: 北京今天天气"
+)
+```
+
+**执行工具后得到 Observation：**
+```
+北京今天晴朗，气温5-15摄氏度，风力3级
+```
+
+---
+
+**第2轮对话 - 发送给 LLM 的 Prompt（包含历史）：**
+
+```
+Answer the following questions as best you can. You have access to the following tools:
+
+search: 搜索互联网获取信息
+calculator: 进行数学计算
+
+Use the following format:
+...（相同格式说明）
+
+Begin!
+
+Question: 今天北京的天气如何？
+Thought:我需要搜索北京今天的天气信息。
+Action: search
+Action Input: 北京今天天气
+Observation: 北京今天晴朗，气温5-15摄氏度，风力3级
+Thought:
+```
+
+**LLM 输出：**
+
+```
+我现在知道了北京今天的天气情况。
+Final Answer: 北京今天天气晴朗，气温在5到15摄氏度之间，风力3级。
+```
+
+**解析器解析结果：**
+```python
+AgentFinish(
+    return_values={"output": "北京今天天气晴朗，气温在5到15摄氏度之间，风力3级。"},
+    log="..."
+)
+```
+
+---
+
+## 📝 第二部分：TodoList Write Todo 实现
+
+### 完整流程图
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                      TodoList ReAct Agent 完整流程                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  用户: "帮我添加一个任务：明天下午3点开会"                                                   │
+│                                                                                         │
+│  ══════════════════════════ 第1轮交互 ══════════════════════════                          │
+│                                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ 发送给 LLM 的 Prompt:                                                             │   │
+│  │                                                                                   │   │
+│  │ You are a helpful TodoList assistant. You have access to the following tools:    │   │
+│  │                                                                                   │   │
+│  │ add_todo: Add a new todo item. Input should be JSON: {"title": "...",            │   │
+│  │           "due_date": "...", "priority": "high/medium/low"}                      │   │
+│  │ list_todos: List all todos. No input required.                                   │   │
+│  │ complete_todo: Mark a todo as complete. Input should be the todo ID.             │   │
+│  │ delete_todo: Delete a todo item. Input should be the todo ID.                    │   │
+│  │                                                                                   │   │
+│  │ Use the following format:                                                         │   │
+│  │ Question: the input question you must answer                                      │   │
+│  │ Thought: you should always think about what to do                                 │   │
+│  │ Action: the action to take, should be one of [add_todo, list_todos, ...]         │   │
+│  │ Action Input: the input to the action                                             │   │
+│  │ Observation: the result of the action                                             │   │
+│  │ ... (this Thought/Action/Action Input/Observation can repeat N times)             │   │
+│  │ Thought: I now know the final answer                                              │   │
+│  │ Final Answer: the final answer to the original input question                     │   │
+│  │                                                                                   │   │
+│  │ Begin!                                                                            │   │
+│  │                                                                                   │   │
+│  │ Question: 帮我添加一个任务：明天下午3点开会                                          │   │
+│  │ Thought:                                                                          │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                       │                                                 │
+│                                       ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ LLM 输出:                                                                         │   │
+│  │                                                                                   │   │
+│  │ 用户想要添加一个开会任务，时间是明天下午3点。我需要使用 add_todo 工具来创建这个任务。  │   │
+│  │ Action: add_todo                                                                  │   │
+│  │ Action Input: {"title": "开会", "due_date": "2025-12-02 15:00", "priority": "high"}│   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                       │                                                 │
+│                                       ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ 解析器解析 (ReActSingleInputOutputParser.parse):                                   │   │
+│  │                                                                                   │   │
+│  │ 正则匹配: r"Action\s*\d*\s*:[\s]*(.*?)[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)│   │
+│  │                                                                                   │   │
+│  │ 结果: AgentAction(                                                                │   │
+│  │   tool="add_todo",                                                                │   │
+│  │   tool_input='{"title": "开会", "due_date": "2025-12-02 15:00", "priority": "high"}│   │
+│  │   log="用户想要添加一个开会任务..."                                                 │   │
+│  │ )                                                                                 │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                       │                                                 │
+│                                       ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ 执行工具 (AgentExecutor._perform_agent_action):                                    │   │
+│  │                                                                                   │   │
+│  │ tool = name_to_tool_map["add_todo"]                                               │   │
+│  │ observation = tool.run('{"title": "开会", ...}')                                  │   │
+│  │                                                                                   │   │
+│  │ 工具内部执行:                                                                      │   │
+│  │   - 解析 JSON 输入                                                                │   │
+│  │   - 调用 TodoStorage.add_todo()                                                   │   │
+│  │   - 保存到数据库/文件                                                              │   │
+│  │   - 返回: "成功添加任务！ID: todo_001, 标题: 开会, 截止时间: 2025-12-02 15:00"      │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                       │                                                 │
+│                                       ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ 更新 intermediate_steps:                                                          │   │
+│  │                                                                                   │   │
+│  │ intermediate_steps.append((                                                       │   │
+│  │   AgentAction(tool="add_todo", ...),                                              │   │
+│  │   "成功添加任务！ID: todo_001, 标题: 开会, 截止时间: 2025-12-02 15:00"              │   │
+│  │ ))                                                                                │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                         │
+│  ══════════════════════════ 第2轮交互 ══════════════════════════                          │
+│                                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ 构建 agent_scratchpad (format_log_to_str):                                        │   │
+│  │                                                                                   │   │
+│  │ 用户想要添加一个开会任务，时间是明天下午3点。我需要使用 add_todo 工具来创建这个任务。  │   │
+│  │ Action: add_todo                                                                  │   │
+│  │ Action Input: {"title": "开会", "due_date": "2025-12-02 15:00", "priority": "high"}│   │
+│  │ Observation: 成功添加任务！ID: todo_001, 标题: 开会, 截止时间: 2025-12-02 15:00    │   │
+│  │ Thought:                                                                          │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                       │                                                 │
+│                                       ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ 发送给 LLM 的 Prompt (第2轮):                                                      │   │
+│  │                                                                                   │   │
+│  │ You are a helpful TodoList assistant...                                           │   │
+│  │ ...（相同的系统提示）                                                               │   │
+│  │                                                                                   │   │
+│  │ Question: 帮我添加一个任务：明天下午3点开会                                          │   │
+│  │ Thought:用户想要添加一个开会任务...                                                 │   │
+│  │ Action: add_todo                                                                  │   │
+│  │ Action Input: {"title": "开会", "due_date": "2025-12-02 15:00", "priority": "high"}│   │
+│  │ Observation: 成功添加任务！ID: todo_001, 标题: 开会, 截止时间: 2025-12-02 15:00    │   │
+│  │ Thought:                                                                          │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                       │                                                 │
+│                                       ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ LLM 输出:                                                                         │   │
+│  │                                                                                   │   │
+│  │ 任务已经成功添加到待办列表中。                                                      │   │
+│  │ Final Answer: 已成功为您添加任务"开会"，安排在明天(2025-12-02)下午3点，               │   │
+│  │ 优先级为高。任务ID为 todo_001。                                                    │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                       │                                                 │
+│                                       ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ 解析器解析:                                                                        │   │
+│  │                                                                                   │   │
+│  │ 检测到 "Final Answer:" → 返回 AgentFinish                                         │   │
+│  │                                                                                   │   │
+│  │ 结果: AgentFinish(                                                                │   │
+│  │   return_values={"output": "已成功为您添加任务'开会'..."},                          │   │
+│  │   log="..."                                                                       │   │
+│  │ )                                                                                 │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                       │                                                 │
+│                                       ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ AgentExecutor._return:                                                            │   │
+│  │                                                                                   │   │
+│  │ 返回: {"output": "已成功为您添加任务'开会'，安排在明天(2025-12-02)下午3点..."}     │   │
+│  └─────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 完整代码实现
+
+```python
+"""
+TodoList ReAct Agent 完整实现
+基于 LangChain ReAct 模式
+"""
+import json
+import uuid
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, Field
+
+from langchain_core.prompts import PromptTemplate
+from langchain_core.tools import BaseTool, tool
+from langchain_openai import ChatOpenAI
+
+from langchain_classic.agents import AgentExecutor, create_react_agent
+
+
+# ==================== 1. 数据模型 ====================
+
+class TodoItem(BaseModel):
+    """单个 Todo 项目"""
+    id: str = Field(default_factory=lambda: f"todo_{uuid.uuid4().hex[:8]}")
+    title: str
+    description: str = ""
+    due_date: Optional[str] = None
+    priority: str = "medium"  # high, medium, low
+    completed: bool = False
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+# ==================== 2. Todo 存储层 ====================
+
+class TodoStorage:
+    """简单的内存存储（生产环境可替换为数据库）"""
+    
+    def __init__(self):
+        self._todos: dict[str, TodoItem] = {}
+    
+    def add(self, todo: TodoItem) -> TodoItem:
+        self._todos[todo.id] = todo
+        return todo
+    
+    def get(self, todo_id: str) -> Optional[TodoItem]:
+        return self._todos.get(todo_id)
+    
+    def list_all(self) -> list[TodoItem]:
+        return list(self._todos.values())
+    
+    def update(self, todo_id: str, **updates) -> Optional[TodoItem]:
+        if todo_id in self._todos:
+            todo = self._todos[todo_id]
+            for key, value in updates.items():
+                if hasattr(todo, key):
+                    setattr(todo, key, value)
+            return todo
+        return None
+    
+    def delete(self, todo_id: str) -> bool:
+        if todo_id in self._todos:
+            del self._todos[todo_id]
+            return True
+        return False
+
+
+# 全局存储实例
+todo_storage = TodoStorage()
+
+
+# ==================== 3. 定义 Tools ====================
+
+@tool
+def add_todo(input_json: str) -> str:
+    """
+    Add a new todo item to the list.
+    
+    Input should be a JSON string with the following format:
+    {
+        "title": "任务标题 (必填)",
+        "description": "任务描述 (可选)",
+        "due_date": "截止日期，格式: YYYY-MM-DD HH:MM (可选)",
+        "priority": "优先级: high/medium/low (可选，默认medium)"
+    }
+    
+    Returns a confirmation message with the created todo ID.
+    """
+    try:
+        data = json.loads(input_json)
+        
+        if "title" not in data:
+            return "错误：必须提供任务标题 (title)"
+        
+        todo = TodoItem(
+            title=data["title"],
+            description=data.get("description", ""),
+            due_date=data.get("due_date"),
+            priority=data.get("priority", "medium"),
+        )
+        
+        created = todo_storage.add(todo)
+        
+        result = f"✅ 成功添加任务！\n"
+        result += f"   ID: {created.id}\n"
+        result += f"   标题: {created.title}\n"
+        if created.due_date:
+            result += f"   截止时间: {created.due_date}\n"
+        result += f"   优先级: {created.priority}"
+        
+        return result
+        
+    except json.JSONDecodeError:
+        return "错误：输入必须是有效的 JSON 格式"
+    except Exception as e:
+        return f"错误：添加任务失败 - {str(e)}"
+
+
+@tool
+def list_todos(input: str = "") -> str:
+    """
+    List all todo items in the list.
+    
+    No input required. Just call this tool to see all todos.
+    
+    Returns a formatted list of all todos with their details.
+    """
+    todos = todo_storage.list_all()
+    
+    if not todos:
+        return "📋 待办列表为空，还没有任何任务。"
+    
+    result = f"📋 待办列表 (共 {len(todos)} 项):\n\n"
+    
+    for todo in todos:
+        status = "✅" if todo.completed else "⬜"
+        priority_emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(todo.priority, "⚪")
+        
+        result += f"{status} [{todo.id}] {todo.title}\n"
+        if todo.description:
+            result += f"   📝 {todo.description}\n"
+        if todo.due_date:
+            result += f"   📅 截止: {todo.due_date}\n"
+        result += f"   {priority_emoji} 优先级: {todo.priority}\n\n"
+    
+    return result
+
+
+@tool
+def complete_todo(todo_id: str) -> str:
+    """
+    Mark a todo item as completed.
+    
+    Input should be the todo ID (e.g., "todo_abc12345").
+    
+    Returns a confirmation message.
+    """
+    todo_id = todo_id.strip()
+    todo = todo_storage.update(todo_id, completed=True)
+    
+    if todo:
+        return f"✅ 任务 '{todo.title}' (ID: {todo_id}) 已标记为完成！"
+    else:
+        return f"❌ 未找到 ID 为 '{todo_id}' 的任务。请使用 list_todos 查看所有任务。"
+
+
+@tool
+def delete_todo(todo_id: str) -> str:
+    """
+    Delete a todo item from the list.
+    
+    Input should be the todo ID (e.g., "todo_abc12345").
+    
+    Returns a confirmation message.
+    """
+    todo_id = todo_id.strip()
+    todo = todo_storage.get(todo_id)
+    
+    if todo and todo_storage.delete(todo_id):
+        return f"🗑️ 任务 '{todo.title}' (ID: {todo_id}) 已删除！"
+    else:
+        return f"❌ 未找到 ID 为 '{todo_id}' 的任务。请使用 list_todos 查看所有任务。"
+
+
+@tool
+def update_todo(input_json: str) -> str:
+    """
+    Update an existing todo item.
+    
+    Input should be a JSON string with the following format:
+    {
+        "id": "todo_xxx (必填)",
+        "title": "新标题 (可选)",
+        "description": "新描述 (可选)",
+        "due_date": "新截止日期 (可选)",
+        "priority": "新优先级 (可选)"
+    }
+    
+    Returns a confirmation message.
+    """
+    try:
+        data = json.loads(input_json)
+        
+        if "id" not in data:
+            return "错误：必须提供任务 ID"
+        
+        todo_id = data.pop("id")
+        todo = todo_storage.update(todo_id, **data)
+        
+        if todo:
+            return f"✅ 任务 (ID: {todo_id}) 已更新！\n   当前标题: {todo.title}"
+        else:
+            return f"❌ 未找到 ID 为 '{todo_id}' 的任务。"
+            
+    except json.JSONDecodeError:
+        return "错误：输入必须是有效的 JSON 格式"
+    except Exception as e:
+        return f"错误：更新任务失败 - {str(e)}"
+
+
+# ==================== 4. 创建 ReAct Agent ====================
+
+def create_todo_agent():
+    """创建 TodoList ReAct Agent"""
+    
+    # 定义工具列表
+    tools = [add_todo, list_todos, complete_todo, delete_todo, update_todo]
+    
+    # 定义 Prompt 模板
+    template = """You are a helpful TodoList assistant. Help users manage their tasks.
+
+You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Important rules:
+1. When adding a todo, always use proper JSON format for the input
+2. Always confirm the action result with the user
+3. If the user's request is unclear, ask for clarification
+4. Be helpful and proactive in suggesting related actions
+
+Begin!
+
+Question: {input}
+Thought:{agent_scratchpad}"""
+
+    prompt = PromptTemplate.from_template(template)
+    
+    # 创建 LLM
+    llm = ChatOpenAI(
+        model="gpt-4",
+        temperature=0,
+    )
+    
+    # 创建 ReAct Agent
+    agent = create_react_agent(llm, tools, prompt)
+    
+    # 创建 AgentExecutor
+    agent_executor = AgentExecutor(
+        agent=agent,
+        tools=tools,
+        verbose=True,  # 开启详细日志，可以看到思考过程
+        handle_parsing_errors=True,  # 自动处理解析错误
+        max_iterations=10,  # 最大迭代次数
+    )
+    
+    return agent_executor
+
+
+# ==================== 5. 运行示例 ====================
+
+def main():
+    """运行 TodoList Agent 示例"""
+    
+    agent = create_todo_agent()
+    
+    # 示例1: 添加任务
+    print("=" * 60)
+    print("示例1: 添加任务")
+    print("=" * 60)
+    result = agent.invoke({
+        "input": "帮我添加一个任务：明天下午3点开会，优先级高"
+    })
+    print(f"\n最终输出: {result['output']}\n")
+    
+    # 示例2: 查看所有任务
+    print("=" * 60)
+    print("示例2: 查看所有任务")
+    print("=" * 60)
+    result = agent.invoke({
+        "input": "显示我所有的待办事项"
+    })
+    print(f"\n最终输出: {result['output']}\n")
+    
+    # 示例3: 复杂操作
+    print("=" * 60)
+    print("示例3: 复杂操作")
+    print("=" * 60)
+    result = agent.invoke({
+        "input": "先帮我添加一个任务'写周报'，截止日期是这周五，然后显示所有任务"
+    })
+    print(f"\n最终输出: {result['output']}\n")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### 详细执行日志示例
+
+当运行 `示例1: 添加任务` 时，会看到类似这样的详细日志：
+
+```
+> Entering new AgentExecutor chain...
+
+用户想要添加一个开会任务，时间是明天下午3点，优先级为高。我需要使用 add_todo 工具来创建这个任务。首先我需要构造正确的 JSON 格式输入。
+
+Action: add_todo
+Action Input: {"title": "开会", "due_date": "2025-12-02 15:00", "priority": "high"}
+
+Observation: ✅ 成功添加任务！
+   ID: todo_a1b2c3d4
+   标题: 开会
+   截止时间: 2025-12-02 15:00
+   优先级: high
+
+Thought: 任务已经成功添加到待办列表中。我现在可以给用户一个确认的回复。
+
+Final Answer: 已成功为您添加任务"开会"！
+- 任务ID: todo_a1b2c3d4
+- 安排时间: 明天(2025-12-02)下午3点
+- 优先级: 高
+
+您还需要我帮您做什么吗？
+
+> Finished chain.
+```
+
+### 数据流总结表
+
+| 阶段 | 组件 | 输入 | 输出 |
+|------|------|------|------|
+| 1. 用户输入 | - | 自然语言请求 | `{"input": "..."}` |
+| 2. 构建 Scratchpad | `format_log_to_str` | `intermediate_steps` | 历史字符串 |
+| 3. 填充 Prompt | `PromptTemplate` | tools, tool_names, input, scratchpad | 完整 prompt |
+| 4. LLM 推理 | `ChatOpenAI` | prompt | Thought + Action + Action Input |
+| 5. 解析输出 | `ReActSingleInputOutputParser` | LLM 文本 | `AgentAction` 或 `AgentFinish` |
+| 6. 执行工具 | `Tool.run()` | action_input | observation 字符串 |
+| 7. 循环/返回 | `AgentExecutor` | - | 继续循环或返回结果 |
+
+---
+
